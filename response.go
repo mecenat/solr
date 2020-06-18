@@ -8,6 +8,7 @@ type Response struct {
 	Error  *ResponseError          `json:"error"`
 	Debug  *map[string]interface{} `json:"debug"`
 	Doc    *Doc                    `json:"doc"`
+	Status *string                 `json:"status"`
 }
 
 type ResponseHeader struct {

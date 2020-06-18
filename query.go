@@ -8,21 +8,24 @@ import (
 
 // Query Options and other constants
 const (
-	QueryOptionDebug                = "debug"
-	QueryOptionDefType              = "defType"
-	QueryOptionQ                    = "q"
-	QueryOptionQOperation           = "q.op"
-	QueryOptionFilter               = "fq"
-	QueryOptionFieldList            = "fl"
-	QueryOptionRows                 = "rows"
-	QueryOptionStart                = "start"
-	QueryOptionSort                 = "sort"
-	QueryOptionWT                   = "wt"
-	ReturnTypeJSON                  = "json"
-	DefTypeDisMax                   = "dismax"
-	DefTypeEDisMax                  = "edismax"
-	DefTypeStandard                 = "lucene"
-	DebugTypeQuery        DebugType = "query"
+	QueryOptionDebug                  = "debug"
+	QueryOptionDefType                = "defType"
+	QueryOptionQ                      = "q"
+	QueryOptionQOperation             = "q.op"
+	QueryOptionFilter                 = "fq"
+	QueryOptionFieldList              = "fl"
+	QueryOptionRows                   = "rows"
+	QueryOptionStart                  = "start"
+	QueryOptionSort                   = "sort"
+	QueryOptionWT                     = "wt"
+	QueryOptionCommit                 = "commit"
+	QueryOptionOverwrite              = "overwrite"
+	QueryOptionCommitWithin           = "commitWithin"
+	ReturnTypeJSON                    = "json"
+	DefTypeDisMax                     = "dismax"
+	DefTypeEDisMax                    = "edismax"
+	DefTypeStandard                   = "lucene"
+	DebugTypeQuery          DebugType = "query"
 )
 
 type Query struct {
@@ -42,6 +45,26 @@ type DebugType string
 type QueryOptions struct {
 	Debug *DebugType
 	Rows  int
+}
+
+type WriteOptions struct {
+	Commit       bool
+	CommitWithin int64
+	Overwrite    *bool
+}
+
+func (opts *WriteOptions) formatQueryFromOpts() url.Values {
+	q := make(url.Values)
+	if opts.Commit {
+		q.Set(QueryOptionCommit, "true")
+	}
+	if opts.CommitWithin > 0 {
+		q.Set(QueryOptionCommitWithin, strconv.FormatInt(opts.CommitWithin, 10))
+	}
+	if opts.Overwrite != nil {
+		q.Set(QueryOptionOverwrite, strconv.FormatBool(*opts.Overwrite))
+	}
+	return q
 }
 
 // NewQuery returns a new Solr query
@@ -111,12 +134,12 @@ func (q *Query) SetSort(value string) {
 	q.params.Set(QueryOptionSort, value)
 }
 
-// SetRows sets the amount of rows to be returned from the query overwritting the
-// default value lucene.apache.org/solr/guide/8_5/common-query-parameters.html#rows-parameter
-func (q *Query) SetRows(value int) {
-	sv := strconv.Itoa(value)
-	q.params.Set(QueryOptionRows, sv)
-}
+// // SetRows sets the amount of rows to be returned from the query overwritting the
+// // default value lucene.apache.org/solr/guide/8_5/common-query-parameters.html#rows-parameter
+// func (q *Query) SetRows(value int) {
+// 	sv := strconv.Itoa(value)
+// 	q.params.Set(QueryOptionRows, sv)
+// }
 
 func (q *Query) String() string {
 	return q.params.Encode()
