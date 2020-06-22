@@ -29,8 +29,8 @@ const (
 )
 
 type Query struct {
-	Debug              string   `json:"debug"`
-	FQ                 []string `json:"fq"`
+	Debug string `json:"debug"`
+	// FQ                 []string `json:"fq"`
 	Sort               string   `json:"sort"`
 	Start              string   `json:"start"`
 	Rows               string   `json:"rows"`
@@ -42,7 +42,7 @@ type Query struct {
 
 type DebugType string
 
-type QueryOptions struct {
+type ReadOptions struct {
 	Debug *DebugType
 	Rows  int
 }
@@ -54,6 +54,10 @@ type WriteOptions struct {
 }
 
 func (opts *WriteOptions) formatQueryFromOpts() url.Values {
+	if opts == nil {
+		return nil
+	}
+
 	q := make(url.Values)
 	if opts.Commit {
 		q.Set(QueryOptionCommit, "true")
@@ -68,7 +72,7 @@ func (opts *WriteOptions) formatQueryFromOpts() url.Values {
 }
 
 // NewQuery returns a new Solr query
-func NewQuery(opts *QueryOptions) *Query {
+func NewQuery(opts *ReadOptions) *Query {
 	nq := &Query{}
 	nq.params = make(url.Values)
 	if opts.Debug != nil {

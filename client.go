@@ -11,8 +11,9 @@ import (
 )
 
 type Client struct {
-	conn     *Connection
-	BasePath string
+	conn       *Connection
+	BasePath   string
+	AutoCommit bool
 }
 
 type Connection struct {
@@ -84,86 +85,78 @@ func (c *Client) Ping() error {
 	return nil
 }
 
-func (c *Client) Search(q *Query) (*Response, error) {
-	url := c.BasePath + "/select?" + q.String()
-	return c.request(context.Background(), http.MethodGet, url, nil)
+// Search ...
+func (c *Client) Search(ctx context.Context, q *Query) (*Response, error) {
+	url := c.formatURL("/select", q.params)
+	return read(ctx, c.conn.httpClient, url)
 }
 
 // Get performs a real time get that returns the latest version of the specified document(s)
 // https://lucene.apache.org/solr/guide/8_5/realtime-get.html
-func (c *Client) Get(id string) (*Response, error) {
-	query := fmt.Sprintf("?id=%s", id)
-	url := c.BasePath + "/get" + query
-	return c.request(context.Background(), http.MethodGet, url, nil)
+func (c *Client) Get(ctx context.Context, id string) (*Response, error) {
+	vals := make(url.Values)
+	vals.Set("id", id)
+	url := c.formatURL("/get", vals)
+	return read(ctx, c.conn.httpClient, url)
 }
 
 // BatchGet performs a real time get that returns the latest version of the specified document(s)
 // https://lucene.apache.org/solr/guide/8_5/realtime-get.html
-func (c *Client) BatchGet(ids []string, filter string) (*Response, error) {
-	query := fmt.Sprintf("?ids=%s&fq=%s", strings.Join(ids, ","), url.QueryEscape(filter))
-	url := c.BasePath + "/get" + query
-	return c.request(context.Background(), http.MethodGet, url, nil)
+func (c *Client) BatchGet(ctx context.Context, ids []string, filter string) (*Response, error) {
+	vals := make(url.Values)
+	vals.Set("ids", strings.Join(ids, ","))
+	vals.Set("fq", filter)
+	url := c.formatURL("/get", vals)
+	return read(ctx, c.conn.httpClient, url)
 }
 
-func (c *Client) Create(item interface{}, opts *WriteOptions) (*Response, error) {
+// Create inserts the given interface to the db. The provided interface must be valid JSON
+// implementing the JSONMarshaler interface (see /examples)
+func (c *Client) Create(ctx context.Context, item interface{}, opts *WriteOptions) (*Response, error) {
 	url := c.formatURL("/update/json/docs", opts.formatQueryFromOpts())
-
-	itemBytes, err := interfaceToBytes(item)
-	if err != nil {
-		return nil, err
-	}
-
-	err = isJSON(itemBytes)
-	if err != nil {
-		return nil, fmt.Errorf("Invalid JSON provided: %s", err)
-	}
-
-	return c.request(context.Background(), http.MethodPost, url, itemBytes)
+	return create(ctx, c.conn.httpClient, url, item)
 }
 
-func (c *Client) BatchCreate(items interface{}) (*Response, error) {
-	url := c.BasePath + "/update/json"
-
-	itemBytes, err := interfaceToBytes(items)
-	if err != nil {
-		return nil, err
-	}
-
-	err = isArrayOfJSON(itemBytes)
-	if err != nil {
-		return nil, fmt.Errorf("Invalid JSON provided: %s", err)
-	}
-
-	return c.request(context.Background(), http.MethodPost, url, itemBytes)
+// BatchCreate inserts an array of JSON data to solr. The provided interface must be a valid array
+// of JSON objects
+func (c *Client) BatchCreate(ctx context.Context, items interface{}, opts *WriteOptions) (*Response, error) {
+	url := c.formatURL("/update", opts.formatQueryFromOpts())
+	return batchCreate(ctx, c.conn.httpClient, url, items)
 }
 
-func (c *Client) Commit() (*Response, error) {
+// Update does an atomic update
+func (c *Client) Update(ctx context.Context, item *Fields, opts *WriteOptions) (*Response, error) {
+	url := c.formatURL("/update", opts.formatQueryFromOpts())
+	return update(ctx, c.conn.httpClient, url, item)
+}
+
+// Commit makes a call to the update endpoint with the commit option set
+// to true commiting all uncommited changes
+func (c *Client) Commit(ctx context.Context) (*Response, error) {
+	url := c.BasePath + "/update"
+	return commit(ctx, c.conn.httpClient, url)
+}
+
+// Rollback deletes all uncommited changes
+func (c *Client) Rollback(ctx context.Context) (*Response, error) {
 	url := c.BasePath + "/update?commit=true"
-	return c.request(context.Background(), http.MethodPost, url, nil)
+	return rollback(ctx, c.conn.httpClient, url)
 }
 
-func (c *Client) DeleteByID(id string) (*Response, error) {
-	path := c.BasePath + "/update"
-
-	qq := map[string]map[string]interface{}{"delete": {"id": id}}
-
-	bdBytes, err := interfaceToBytes(qq)
-	if err != nil {
-		return nil, err
-	}
-
-	return c.request(context.Background(), http.MethodPost, path, bdBytes)
+// DeleteByID deletes the document specified by its id (uniqueKey field)
+func (c *Client) DeleteByID(ctx context.Context, id string, opts *WriteOptions) (*Response, error) {
+	url := c.formatURL("/update", opts.formatQueryFromOpts())
+	return delete(ctx, c.conn.httpClient, url, formatDeleteByID(id))
 }
 
-func (c *Client) DeleteByQuery(query string) (*Response, error) {
-	path := c.BasePath + "/update"
+// DeleteByQuery deletes the document(s) that are returned by the query
+func (c *Client) DeleteByQuery(ctx context.Context, query string, opts *WriteOptions) (*Response, error) {
+	url := c.formatURL("/update", opts.formatQueryFromOpts())
+	return delete(ctx, c.conn.httpClient, url, formatDeleteByQuery(query))
+}
 
-	qq := map[string]map[string]interface{}{"delete": {"query": url.QueryEscape(query)}}
-
-	bdBytes, err := interfaceToBytes(qq)
-	if err != nil {
-		return nil, err
-	}
-
-	return c.request(context.Background(), http.MethodPost, path, bdBytes)
+// Clear is a wrapper function for DeleteByQuery where the query is "*:*" which erases
+// ALL documents from the database. Use at your own risk!
+func (c *Client) Clear(ctx context.Context) (*Response, error) {
+	return c.DeleteByQuery(ctx, "*:*", &WriteOptions{Commit: true})
 }
