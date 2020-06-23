@@ -1,7 +1,5 @@
 package solr
 
-import "encoding/json"
-
 type Response struct {
 	Header *ResponseHeader         `json:"responseHeader"`
 	Data   *ResponseData           `json:"response"`
@@ -42,12 +40,4 @@ func (d Docs) ToBytes() ([]byte, error) {
 
 func (d *Doc) ToBytes() ([]byte, error) {
 	return interfaceToBytes(d)
-}
-
-func interfaceToBytes(a interface{}) ([]byte, error) {
-	b, err := json.Marshal(a)
-	if err != nil {
-		return nil, err
-	}
-	return b, err
 }
