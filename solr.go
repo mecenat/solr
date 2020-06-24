@@ -58,7 +58,7 @@ type Client interface {
 	// The expected Fields input can be easily created using the provided helpers (check examples). This method
 	// accepts extra options that are passed to the service as part of the request query. For more info:
 	// https://lucene.apache.org/solr/guide/8_5/updating-parts-of-documents.html#atomic-updates
-	Update(ctx context.Context, item *Fields, opts *WriteOptions) (*Response, error)
+	Update(ctx context.Context, item *UpdatedFields, opts *WriteOptions) (*Response, error)
 
 	// DeleteByID sends a JSON update command that deletes the document specified by its id (uniqueKey field).
 	// It calls the `/update` endpoint and sends Solr JSON. This method accepts extra options that are
@@ -90,6 +90,10 @@ type Client interface {
 	// For more info:
 	// https://lucene.apache.org/solr/guide/8_5/uploading-data-with-index-handlers.html#sending-json-update-commands
 	Rollback(ctx context.Context) (*Response, error)
+
+	// CustomUpdate allows the creation of a request to the `/update` endpoint that can include more than one update
+	// command or for those that want a more finegrained request.
+	CustomUpdate(ctx context.Context, item *UpdateBuilder) (*Response, error)
 }
 
 func read(ctx context.Context, client *http.Client, url string) (*Response, error) {
@@ -124,7 +128,7 @@ func batchCreate(ctx context.Context, client *http.Client, url string, items int
 	return request(ctx, client, http.MethodPost, url, bodyBytes)
 }
 
-func update(ctx context.Context, client *http.Client, url string, item *Fields) (*Response, error) {
+func update(ctx context.Context, client *http.Client, url string, item *UpdatedFields) (*Response, error) {
 	ub := NewUpdateBuilder()
 	ub.Add(formatDocEntry(item.fields))
 
@@ -165,6 +169,15 @@ func rollback(ctx context.Context, client *http.Client, url string) (*Response, 
 	ub.Rollback()
 
 	bodyBytes, err := interfaceToBytes(ub.commands)
+	if err != nil {
+		return nil, err
+	}
+
+	return request(ctx, client, http.MethodPost, url, bodyBytes)
+}
+
+func customUpdate(ctx context.Context, client *http.Client, url string, item *UpdateBuilder) (*Response, error) {
+	bodyBytes, err := interfaceToBytes(item.commands)
 	if err != nil {
 		return nil, err
 	}

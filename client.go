@@ -89,7 +89,7 @@ func (c *SingleClient) BatchCreate(ctx context.Context, items interface{}, opts 
 }
 
 // Update ...
-func (c *SingleClient) Update(ctx context.Context, item *Fields, opts *WriteOptions) (*Response, error) {
+func (c *SingleClient) Update(ctx context.Context, item *UpdatedFields, opts *WriteOptions) (*Response, error) {
 	url := c.formatURL("/update", opts.formatQueryFromOpts())
 	return update(ctx, c.conn.httpClient, url, item)
 }
@@ -121,4 +121,10 @@ func (c *SingleClient) DeleteByQuery(ctx context.Context, query string, opts *Wr
 // Clear ...
 func (c *SingleClient) Clear(ctx context.Context) (*Response, error) {
 	return c.DeleteByQuery(ctx, "*:*", &WriteOptions{Commit: true})
+}
+
+// CustomUpdate ...
+func (c *SingleClient) CustomUpdate(ctx context.Context, item *UpdateBuilder) (*Response, error) {
+	url := c.formatURL("/update", nil)
+	return customUpdate(ctx, c.conn.httpClient, url, item)
 }

@@ -21,11 +21,11 @@ type PRClient struct {
 	ReplicaPath string
 }
 
-// NewPRClient returns two connections from the provided host and cores, one for the primary
-// server and another for the replica. By default it is assumed that the primary server is
-// used for writing data, and the replica server for reading data. A ping is also sent
-// to both servers to verify that they are active and a connection can be made.
-func NewPRClient(pHost, pCore, rHost, rCore string, pClient, rClient *http.Client) (Client, error) {
+// NewPrimaryReplicaClient returns two connections from the provided host and cores, one for the primary
+// server and another for the replica. By default it is assumed that the primary server is used for
+// writing data, and the replica server for reading data. A ping is also sent to both servers
+// during initialization to verify that they are active and a connection can be made.
+func NewPrimaryReplicaClient(pHost, pCore, rHost, rCore string, pClient, rClient *http.Client) (Client, error) {
 	pConn := &Connection{
 		Host:       pHost,
 		Core:       pCore,
@@ -117,7 +117,7 @@ func (c *PRClient) BatchCreate(ctx context.Context, items interface{}, opts *Wri
 }
 
 // Update ...
-func (c *PRClient) Update(ctx context.Context, item *Fields, opts *WriteOptions) (*Response, error) {
+func (c *PRClient) Update(ctx context.Context, item *UpdatedFields, opts *WriteOptions) (*Response, error) {
 	url := c.formatPrimaryURL("/update", opts.formatQueryFromOpts())
 	return update(ctx, c.primary.httpClient, url, item)
 }
@@ -149,4 +149,10 @@ func (c *PRClient) DeleteByQuery(ctx context.Context, query string, opts *WriteO
 // Clear ...
 func (c *PRClient) Clear(ctx context.Context) (*Response, error) {
 	return c.DeleteByQuery(ctx, "*:*", &WriteOptions{Commit: true})
+}
+
+// CustomUpdate ...
+func (c *PRClient) CustomUpdate(ctx context.Context, item *UpdateBuilder) (*Response, error) {
+	url := c.formatPrimaryURL("/update", nil)
+	return customUpdate(ctx, c.primary.httpClient, url, item)
 }
