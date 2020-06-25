@@ -95,15 +95,21 @@ func (c *SingleClient) Update(ctx context.Context, item *UpdatedFields, opts *Wr
 }
 
 // Commit ...
-func (c *SingleClient) Commit(ctx context.Context) (*Response, error) {
+func (c *SingleClient) Commit(ctx context.Context, opts *CommitOptions) (*Response, error) {
 	url := c.BasePath + "/update"
-	return commit(ctx, c.conn.httpClient, url)
+	return commit(ctx, c.conn.httpClient, url, opts)
 }
 
 // Rollback ...
 func (c *SingleClient) Rollback(ctx context.Context) (*Response, error) {
 	url := c.BasePath + "/update?commit=true"
 	return rollback(ctx, c.conn.httpClient, url)
+}
+
+// Optimize ...
+func (c *SingleClient) Optimize(ctx context.Context, opts *OptimizeOptions) (*Response, error) {
+	url := c.formatURL("/update", nil)
+	return optimize(ctx, c.conn.httpClient, url, opts)
 }
 
 // DeleteByID ...

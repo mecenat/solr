@@ -13,10 +13,23 @@ const (
 	CommandDelete     Command = "delete"
 	CommandCommit     Command = "commit"
 	CommandRollback   Command = "rollback"
+	CommandOptimize   Command = "optimize"
 )
 
+// CommitOptions are the available options to a commit update command.
+type CommitOptions struct {
+	DoNotWaitSearcher bool
+	ExpungeDeletes    bool
+}
+
+// OptimizeOptions are the available options to an optimize update command.
+type OptimizeOptions struct {
+	DoNotWaitSearcher bool
+	MaxSegments       int
+}
+
 // Command is used to restrict the available update commands that can
-// be included in the body of a request to the `/update` endpoint
+// be included in the body of a request to the `/update` endpoint.
 type Command string
 
 func (c Command) String() string {
@@ -45,7 +58,7 @@ func NewUpdateBuilder() *UpdateBuilder {
 // recommended to use the `Update` method that is provided
 // by the Client interface.
 func (b *UpdateBuilder) Add(item map[string]interface{}) {
-	b.commands[CommandAdd] = item
+	b.commands[CommandAdd] = formatDocEntry(item)
 }
 
 // Delete inserts a delete command block to the body. It should
@@ -57,18 +70,55 @@ func (b *UpdateBuilder) Delete(doc map[string]interface{}) {
 	b.commands[CommandDelete] = doc
 }
 
-// Commit inserts a commit command block to the body. The command is
-// always an empty objcect. It is recommended to use the `Commit`
-// method that is provided by the Client interface.
-func (b *UpdateBuilder) Commit() {
-	b.commands[CommandCommit] = map[string]interface{}{}
+// Commit inserts a commit command block to the body. Accepts options:
+// DoNotWaitSearcher: By default a commit command blocks until a new
+// 						searcher is opened and registered as the main query
+// 						searcher, making the changes visible.
+// ExpungeDeletes: Merges segments that have more than 10%
+// 						deleted docs, expunging the deleted
+// 						documents in the process.
+// It is recommended to use the `Commit` method that is provided
+// by the Client interface.
+func (b *UpdateBuilder) Commit(opts *CommitOptions) {
+	doc := map[string]interface{}{}
+	if opts != nil {
+		if opts.DoNotWaitSearcher {
+			doc[OptionWaitSearcher] = false
+		}
+		if opts.ExpungeDeletes {
+			doc[OptionExpungeDeletes] = true
+		}
+	}
+	b.commands[CommandCommit] = doc
 }
 
-// Rollback inserts a commit command block to the body. The command is
-// always an empty objcect. It is recommended to use the `Rollback`
+// Rollback inserts a rollback command block to the body. The command is
+// always an empty object. It is recommended to use the `Rollback`
 // method that is provided by the Client interface.
 func (b *UpdateBuilder) Rollback() {
 	b.commands[CommandRollback] = map[string]interface{}{}
+}
+
+// Optimize inserts an optimize command block to the body. Accepts options:
+// DoNotWaitSearcher: By default a commit command blocks until a new
+// 						searcher is opened and registered as the main queryja
+// 						searcher, making the changes visible.
+// MaxSegments: Merge the segments down to no more than this number
+// 					  of segments but does not guarantee that the goal
+// 						will be achieved.
+// It is recommended to use the `Optimize` method that is provided
+// by the Client interface.
+func (b *UpdateBuilder) Optimize(opts *OptimizeOptions) {
+	doc := map[string]interface{}{}
+	if opts != nil {
+		if opts.DoNotWaitSearcher {
+			doc[OptionWaitSearcher] = false
+		}
+		if opts.MaxSegments > 1 {
+			doc[OptionMaxSegments] = opts.MaxSegments
+		}
+	}
+	b.commands[CommandOptimize] = doc
 }
 
 // UpdatedFields is a helper struct that contains the fields to be

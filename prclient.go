@@ -123,15 +123,21 @@ func (c *PRClient) Update(ctx context.Context, item *UpdatedFields, opts *WriteO
 }
 
 // Commit ...
-func (c *PRClient) Commit(ctx context.Context) (*Response, error) {
+func (c *PRClient) Commit(ctx context.Context, opts *CommitOptions) (*Response, error) {
 	url := c.formatPrimaryURL("/update", nil)
-	return commit(ctx, c.primary.httpClient, url)
+	return commit(ctx, c.primary.httpClient, url, opts)
 }
 
 // Rollback ...
 func (c *PRClient) Rollback(ctx context.Context) (*Response, error) {
 	url := c.formatPrimaryURL("/update?commit=true", nil)
 	return rollback(ctx, c.primary.httpClient, url)
+}
+
+// Optimize ...
+func (c *PRClient) Optimize(ctx context.Context, opts *OptimizeOptions) (*Response, error) {
+	url := c.formatPrimaryURL("/update", nil)
+	return optimize(ctx, c.conn.httpClient, url, opts)
 }
 
 // DeleteByID ...

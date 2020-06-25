@@ -82,7 +82,7 @@ type Client interface {
 	// be called at the end of the a transaction to ensure that the indexes are properly updated.
 	// For more info:
 	// https://lucene.apache.org/solr/guide/8_5/uploading-data-with-index-handlers.html#sending-json-update-commands
-	Commit(ctx context.Context) (*Response, error)
+	Commit(ctx context.Context, opts *CommitOptions) (*Response, error)
 
 	// Rollback sends a JSON update command that rollbacks all uncommited changes. Unless specified from one of the
 	// options all write methods of this library will not commit their changes, therefore this method should
@@ -90,6 +90,12 @@ type Client interface {
 	// For more info:
 	// https://lucene.apache.org/solr/guide/8_5/uploading-data-with-index-handlers.html#sending-json-update-commands
 	Rollback(ctx context.Context) (*Response, error)
+
+	// Optimize sends a JSON update command that requests Solr to merge internal data structures. For a large index,
+	// optimization will take some time to complete, but by merging many small segment files into larger segments, \
+	// search performance may improve. More info:
+	// https://lucene.apache.org/solr/guide/8_5/uploading-data-with-index-handlers.html#commit-and-optimize-during-updates
+	Optimize(ctx context.Context, opts *OptimizeOptions) (*Response, error)
 
 	// CustomUpdate allows the creation of a request to the `/update` endpoint that can include more than one update
 	// command or for those that want a more finegrained request.
@@ -152,9 +158,21 @@ func delete(ctx context.Context, client *http.Client, url string, doc Doc) (*Res
 	return request(ctx, client, http.MethodPost, url, bodyBytes)
 }
 
-func commit(ctx context.Context, client *http.Client, url string) (*Response, error) {
+func commit(ctx context.Context, client *http.Client, url string, opts *CommitOptions) (*Response, error) {
 	ub := NewUpdateBuilder()
-	ub.Commit()
+	ub.Commit(opts)
+
+	bodyBytes, err := interfaceToBytes(ub.commands)
+	if err != nil {
+		return nil, err
+	}
+
+	return request(ctx, client, http.MethodPost, url, bodyBytes)
+}
+
+func optimize(ctx context.Context, client *http.Client, url string, opts *OptimizeOptions) (*Response, error) {
+	ub := NewUpdateBuilder()
+	ub.Optimize(opts)
 
 	bodyBytes, err := interfaceToBytes(ub.commands)
 	if err != nil {
