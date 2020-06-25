@@ -70,4 +70,11 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	// Clear the database, playtime is over
+	res, err = slr.Clear(ctx)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println(res)
 }

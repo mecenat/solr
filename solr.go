@@ -1,3 +1,9 @@
+// Copyright 2020 Mecenat (Authors: Konstantinos Koukouvis). All rights reserved.
+// Use of this source code is governed by a MIT-style
+// license that can be found in the LICENSE file.
+
+// Package solr provides a solr client that enables the user to easily connect to
+// one or more solr servers with support for the the basic CRUDL functionality
 package solr
 
 import (
@@ -136,7 +142,7 @@ func batchCreate(ctx context.Context, client *http.Client, url string, items int
 
 func update(ctx context.Context, client *http.Client, url string, item *UpdatedFields) (*Response, error) {
 	ub := NewUpdateBuilder()
-	ub.Add(formatDocEntry(item.fields))
+	ub.Add(item.fields)
 
 	bodyBytes, err := interfaceToBytes(ub.commands)
 	if err != nil {

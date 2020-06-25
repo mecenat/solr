@@ -2,14 +2,23 @@ package data
 
 import "encoding/json"
 
+// No example here, just the data to be used in the other examples
+// For the examples to properly work you used create the correct
+// fields in your solr core's schema. Solr's Dynamically generated
+// fields tend to think everything is a multiValue and that doesn't
+// sit well with the JSON Unmarshaler...
+
+// Film ...
 type Film struct {
-	ID       string   `json:"id"`
-	Name     string   `json:"name"`
-	Year     string   `json:"year"`
-	Genre    []string `json:"genre"`
-	Director []string `json:"directed_by"`
+	ID          string   `json:"id"`
+	Name        string   `json:"name"`
+	Year        string   `json:"year"`
+	Genre       []string `json:"genre"`
+	Director    []string `json:"directed_by"`
+	SeenCounter int      `json:"seen_counter"`
 }
 
+// ToMap ...
 func (f *Film) ToMap() (doc map[string]interface{}, err error) {
 	filmBytes, err := json.Marshal(f)
 	if err != nil {
@@ -19,6 +28,7 @@ func (f *Film) ToMap() (doc map[string]interface{}, err error) {
 	return
 }
 
+// Films ...
 var Films = []*Film{
 	{
 		ID:       "1",

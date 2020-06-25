@@ -45,10 +45,17 @@ type Query struct {
 	params             url.Values
 }
 
+// DebugType is used to restrict the available debug types for a
+// `/search` request
 type DebugType string
 
+// DefType is used to restrict the available defTypes for a
+// `/search` request
 type DefType string
 
+// ReadOptions contains options for read actions. Those include:
+// Debug: Sets the type of debugging for the request
+// Rows: Sets the number of rows to return
 type ReadOptions struct {
 	Debug *DebugType
 	Rows  int
@@ -89,12 +96,14 @@ func (opts *WriteOptions) formatQueryFromOpts() url.Values {
 func NewQuery(opts *ReadOptions) *Query {
 	nq := &Query{}
 	nq.params = make(url.Values)
-	if opts.Debug != nil {
-		nq.params.Set(OptionDebug, string(DebugTypeQuery))
-	}
-	if opts.Rows > 0 {
-		sv := strconv.Itoa(opts.Rows)
-		nq.params.Set(OptionRows, sv)
+	if opts != nil {
+		if opts.Debug != nil {
+			nq.params.Set(OptionDebug, string(DebugTypeQuery))
+		}
+		if opts.Rows > 0 {
+			sv := strconv.Itoa(opts.Rows)
+			nq.params.Set(OptionRows, sv)
+		}
 	}
 	nq.params.Set(OptionWT, ReturnTypeJSON)
 	return nq
@@ -115,13 +124,15 @@ func (q *Query) DelParam(key string) {
 	q.params.Del(key)
 }
 
+// SetQuery sets the Q parameter of the query.
 func (q *Query) SetQuery(value string) {
 	q.params.Set(OptionQ, value)
 }
 
-func (q *Query) SetOperation(value string) {
-	q.params.Set(OptionQOperation, value)
-}
+// // SetOperation sets the operation for the Q parameter
+// func (q *Query) SetOperation(value string) {
+// 	q.params.Set(OptionQOperation, value)
+// }
 
 // AddFilter adds a key-value pair on which to filter the query.
 // More info:
@@ -136,6 +147,8 @@ func (q *Query) SetFilter(value string) {
 	q.params.Set(OptionFilter, value)
 }
 
+// AddField adds the given field to the returned field list.
+// More info:
 // https://lucene.apache.org/solr/guide/8_5/common-query-parameters.html#fl-field-list-parameter
 func (q *Query) AddField(value string) {
 	q.params.Add(OptionFieldList, value)
@@ -150,7 +163,9 @@ func (q *Query) SetStart(value int) {
 	q.params.Set(OptionStart, sv)
 }
 
-// <field name>+<direction>,<field name>+<direction>],…​
+// SetSort sets the way the results are sorted. It should be formatted using the following
+// protocol "<field name> <direction>, <field name> <direction>,...​"
+// More info:
 // https://lucene.apache.org/solr/guide/8_5/common-query-parameters.html#sort-parameter
 func (q *Query) SetSort(value string) {
 	q.params.Set(OptionSort, value)
