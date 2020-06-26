@@ -62,7 +62,7 @@ func main() {
 	fmt.Println(res.Data.NumFound)
 	fmt.Println(len(res.Data.Docs))
 
-	// ------ More options and reading the response
+	// -----------
 
 	// Create a new query without any options
 	q2 := solr.NewQuery(nil)
@@ -99,4 +99,52 @@ func main() {
 	}
 
 	fmt.Println(films[0].Name)
+
+	// -----------
+
+	// Create a new query without any options
+	q3 := solr.NewQuery(nil)
+	// We can search for movies that are both horror
+	// and adventures using the following syntax
+	q3.AddQuery("genre", "horror")
+	q3.AddQuery("genre", "adventure")
+	// we must set the operation here to AND since
+	// the default in Solr is OR
+	q3.SetOperationAND()
+
+	fmt.Println(q3.String())
+
+	// Fire a search with that Query
+	res, err = slr.Search(ctx, q3)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println(res.Data.NumFound)
+
+	// -----------
+
+	// The above will essentially create a query of the type:
+	// q=genre:horror, genre:adventure&q.op=AND
+	// if we want to do more advanced searches then we
+	// should use SetQuery instead like so:
+	// q=genre:horror AND (genre:comedy OR genre:action)
+
+	q4 := solr.NewQuery(nil)
+	q4.SetQuery("genre:horror AND (genre:comedy OR genre:action)")
+
+	fmt.Println(q4.String())
+
+	// Fire a search with that Query
+	res, err = slr.Search(ctx, q4)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println(res.Data.NumFound)
+
+	// Clear the database, playtime is over
+	res, err = slr.Clear(ctx)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println(res)
 }

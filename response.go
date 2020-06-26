@@ -19,9 +19,9 @@ type Response struct {
 // the time it took as well as the params for the search query
 // when applicable
 type ResponseHeader struct {
-	Status int64  `json:"status"`
-	QTime  int64  `json:"QTime"`
-	Params *Query `json:"params"`
+	Status int64                   `json:"status"`
+	QTime  int64                   `json:"QTime"`
+	Params *map[string]interface{} `json:"params"`
 }
 
 // ResponseData is populated on a successful response from the solr

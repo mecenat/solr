@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/url"
 	"strconv"
+	"strings"
 )
 
 // Query Options and other constants
@@ -25,25 +26,16 @@ const (
 	OptionMaxSegments              = "maxSegments"
 	OptionExpungeDeletes           = "expungeDeletes"
 	ReturnTypeJSON                 = "json"
+	QOperationOR                   = "OR"
+	QOperationAND                  = "AND"
 	DefTypeDisMax        DefType   = "dismax"
 	DefTypeEDisMax       DefType   = "edismax"
 	DefTypeStandard      DefType   = "lucene"
 	DebugTypeQuery       DebugType = "query"
+	DebugTypeTiming      DebugType = "timing"
+	DebugTypeResults     DebugType = "results"
+	DebugTypeAll         DebugType = "all"
 )
-
-// Query represents the query parameters of a search. It provides
-// helper methods for most of the available solr query params.
-type Query struct {
-	Debug string `json:"debug"`
-	// FQ                 []string `json:"fq"`
-	Sort               string   `json:"sort"`
-	Start              string   `json:"start"`
-	Rows               string   `json:"rows"`
-	FieldList          []string `json:"fl"`
-	DefaultSearchField string   `json:"df"`
-	Raw                map[string]interface{}
-	params             url.Values
-}
 
 // DebugType is used to restrict the available debug types for a
 // `/search` request
@@ -52,14 +44,6 @@ type DebugType string
 // DefType is used to restrict the available defTypes for a
 // `/search` request
 type DefType string
-
-// ReadOptions contains options for read actions. Those include:
-// Debug: Sets the type of debugging for the request
-// Rows: Sets the number of rows to return
-type ReadOptions struct {
-	Debug *DebugType
-	Rows  int
-}
 
 // WriteOptions contains options for write actions. Those include:
 // Commit: Autocommit all changes alongside the current request
@@ -90,6 +74,21 @@ func (opts *WriteOptions) formatQueryFromOpts() url.Values {
 	return q
 }
 
+// ReadOptions contains options for read actions. Those include:
+// Debug: Sets the type of debugging for the request
+// Rows: Sets the number of rows to return
+type ReadOptions struct {
+	Debug DebugType
+	Rows  int
+}
+
+// Query represents the query parameters of a search. It provides
+// helper methods for most of the available solr query params.
+type Query struct {
+	Q      []string
+	params url.Values
+}
+
 // NewQuery returns an initialized Query. It accepts as options a result
 // rows limit and a debug type. It sets by default the return type
 // to JSON, as it is the only type supported by this library.
@@ -97,7 +96,7 @@ func NewQuery(opts *ReadOptions) *Query {
 	nq := &Query{}
 	nq.params = make(url.Values)
 	if opts != nil {
-		if opts.Debug != nil {
+		if opts.Debug != "" {
 			nq.params.Set(OptionDebug, string(DebugTypeQuery))
 		}
 		if opts.Rows > 0 {
@@ -105,7 +104,6 @@ func NewQuery(opts *ReadOptions) *Query {
 			nq.params.Set(OptionRows, sv)
 		}
 	}
-	nq.params.Set(OptionWT, ReturnTypeJSON)
 	return nq
 }
 
@@ -124,15 +122,29 @@ func (q *Query) DelParam(key string) {
 	q.params.Del(key)
 }
 
+// AddQuery adds a key-value pair to the Q parameter. Warning:
+// Using this will overwrite any call to the `SetQuery`
+// method. For complex logic use that instead
+func (q *Query) AddQuery(key, value string) {
+	q.Q = append(q.Q, fmt.Sprintf("%s:%s", key, value))
+}
+
 // SetQuery sets the Q parameter of the query.
 func (q *Query) SetQuery(value string) {
 	q.params.Set(OptionQ, value)
 }
 
-// // SetOperation sets the operation for the Q parameter
-// func (q *Query) SetOperation(value string) {
-// 	q.params.Set(OptionQOperation, value)
-// }
+// SetOperationAND sets the operation for the Q parameter
+// to AND (only when using `AddQuery`)
+func (q *Query) SetOperationAND() {
+	q.params.Set(OptionQOperation, QOperationAND)
+}
+
+// SetOperationOR sets the operation for the Q parameter
+// to OR (only when using `AddQuery`)
+func (q *Query) SetOperationOR() {
+	q.params.Set(OptionQOperation, QOperationOR)
+}
 
 // AddFilter adds a key-value pair on which to filter the query.
 // More info:
@@ -179,5 +191,9 @@ func (q *Query) SetSort(value string) {
 // }
 
 func (q *Query) String() string {
+	if len(q.Q) > 0 {
+		q.params.Set(OptionQ, strings.Join(q.Q, ", "))
+	}
+	q.params.Set(OptionWT, ReturnTypeJSON)
 	return q.params.Encode()
 }
