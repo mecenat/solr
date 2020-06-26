@@ -15,7 +15,7 @@ import (
 
 func main() {
 	ctx := context.Background()
-	slr, err := solr.NewSingleClient("http://localhost:8983", "data.films", http.DefaultClient)
+	slr, err := solr.NewSingleClient("http://localhost:8983", "films", http.DefaultClient)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -37,7 +37,7 @@ func main() {
 	uf.Set("genre", []string{"Crime", "Action", "Comedy"})
 	uf.Add("directed_by", "Some guy")
 	uf.IncrementBy("seen_counter", 1)
-	res, err := slr.Update(ctx, uf, &solr.WriteOptions{Commit: true})
+	res, err = slr.Update(ctx, uf, &solr.WriteOptions{Commit: true})
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -60,7 +60,7 @@ func main() {
 	fmt.Println(res.Header)
 
 	// RealTime Get the film that was just added
-	res, err = slr.Get(ctx, data.films[0].ID)
+	res, err = slr.Get(ctx, data.Films[0].ID)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -74,7 +74,7 @@ func main() {
 	fmt.Println(res)
 
 	// RealTime Get the film that was just added
-	res, err = slr.Get(ctx, data.films[0].ID)
+	res, err = slr.Get(ctx, data.Films[0].ID)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -82,14 +82,14 @@ func main() {
 	fmt.Println(res.Doc)
 
 	// insert all the documents at once
-	res, err = slr.BatchCreate(ctx, data.films, nil)
+	res, err = slr.BatchCreate(ctx, data.Films, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
 	fmt.Println(res.Header)
 
 	// RealTime Get the film that was just added
-	res, err = slr.BatchGet(ctx, []string{data.films[0].ID, data.films[3].ID}, "")
+	res, err = slr.BatchGet(ctx, []string{data.Films[0].ID, data.Films[3].ID}, "")
 	if err != nil {
 		log.Fatal(err)
 	}
