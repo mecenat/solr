@@ -47,8 +47,6 @@ func interfaceToBytes(a interface{}) ([]byte, error) {
 }
 
 func request(ctx context.Context, client *http.Client, method, url string, body []byte) (*Response, error) {
-	fmt.Println(string(body))
-
 	req, err := http.NewRequest(method, url, bytes.NewBuffer(body))
 	if err != nil {
 		return nil, err
