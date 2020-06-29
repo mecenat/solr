@@ -18,7 +18,7 @@ type SingleClient struct {
 // NewSingleClient returns a connection to the solr client provided by the given
 // host and core. A ping is also sent to the server to verify that it is
 // active and a connection can be made.
-func NewSingleClient(host, core string, client *http.Client) (Client, error) {
+func NewSingleClient(ctx context.Context, host, core string, client *http.Client) (Client, error) {
 	conn := &Connection{
 		Host:       host,
 		Core:       core,
@@ -26,7 +26,7 @@ func NewSingleClient(host, core string, client *http.Client) (Client, error) {
 	}
 	bp := formatBasePath(host, core)
 	solrClient := &SingleClient{conn: conn, BasePath: bp}
-	err := solrClient.Ping(context.Background())
+	err := solrClient.Ping(ctx)
 	if err != nil {
 		return nil, err
 	}

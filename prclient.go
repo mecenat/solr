@@ -25,7 +25,7 @@ type PRClient struct {
 // server and another for the replica. By default it is assumed that the primary server is used for
 // writing data, and the replica server for reading data. A ping is also sent to both servers
 // during initialization to verify that they are active and a connection can be made.
-func NewPrimaryReplicaClient(pHost, pCore, rHost, rCore string, pClient, rClient *http.Client) (Client, error) {
+func NewPrimaryReplicaClient(ctx context.Context, pHost, pCore, rHost, rCore string, pClient, rClient *http.Client) (Client, error) {
 	pConn := &Connection{
 		Host:       pHost,
 		Core:       pCore,
@@ -39,7 +39,7 @@ func NewPrimaryReplicaClient(pHost, pCore, rHost, rCore string, pClient, rClient
 	}
 	rBasePath := formatBasePath(rHost, rCore)
 	solrClient := &PRClient{primary: pConn, replica: rConn, PrimaryPath: pBasePath, ReplicaPath: rBasePath}
-	err := solrClient.Ping(context.Background())
+	err := solrClient.Ping(ctx)
 	if err != nil {
 		return nil, err
 	}

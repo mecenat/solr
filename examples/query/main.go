@@ -13,7 +13,7 @@ import (
 
 func main() {
 	ctx := context.Background()
-	slr, err := solr.NewSingleClient("http://localhost:8983", "films", http.DefaultClient)
+	slr, err := solr.NewSingleClient(ctx, "http://localhost:8983", "films", http.DefaultClient)
 	if err != nil {
 		log.Fatal(err)
 	}
