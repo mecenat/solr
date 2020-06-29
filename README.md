@@ -22,9 +22,10 @@ package main
 import "github.com/mecenat/solr"
 
 func main() {
-	slr, err := solr.NewSingleClient("host", "core", http.DefaultClient)
+	ctx := context.Background()
+	slr, err := solr.NewSingleClient(ctx, "host", "core", http.DefaultClient)
 	if err != nil {
-      ...
+	      ...
 	}
 ```
 When using a the Primary-Replica paradigm:
@@ -34,9 +35,10 @@ package main
 import "github.com/mecenat/solr"
 
 func main() {
-	slr, err := solr.NewPrimaryReplicaClient("primaryHost", "primaryCore", "replicaHost", "replicaCore", primaryClient, replicatClient)
+	ctx := context.Background()
+	slr, err := solr.NewPrimaryReplicaClient(ctx, "primaryHost", "primaryCore", "replicaHost", "replicaCore", primaryClient, replicatClient)
 	if err != nil {
-      ...
+	      ...
 	}
 ```
 
