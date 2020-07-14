@@ -1,6 +1,7 @@
 package solr
 
 import (
+	"errors"
 	"fmt"
 	"net/url"
 	"strconv"
@@ -196,4 +197,144 @@ func (q *Query) String() string {
 	}
 	q.params.Set(OptionWT, ReturnTypeJSON)
 	return q.params.Encode()
+}
+
+// CollapseParams are the available params that can be set when using
+// the Collapsing Query Parser
+type CollapseParams struct {
+	Field      string
+	Min        string
+	Max        string
+	Sort       string
+	NullPolicy *NullPolicy
+	Hint       *Hint
+	Size       string
+}
+
+// NullPolicy determines the policy when the collapsing field
+// value is null on the document
+type NullPolicy string
+
+func (p NullPolicy) String() string {
+	return string(p)
+}
+
+// Hint represents the Collapse hint param
+type Hint string
+
+func (h Hint) String() string {
+	return string(h)
+}
+
+// Constants to secure proper NullPolicy & Hint usage
+const (
+	NullPolicyIgnore   NullPolicy = "ignore"
+	NullPolicyExpand   NullPolicy = "expand"
+	NullPolicyCollapse NullPolicy = "collapse"
+	HintTopFC          Hint       = "top_fc"
+)
+
+// Possible errors returned from improper use of the Collapsing Query Parser
+var (
+	ErrParamsRequired    = errors.New("Param field is required for the CollapsingQParser")
+	ErrTooManyParams     = errors.New("Only one of Max, Min or Sort may be populated")
+	ErrInvalidNullPolicy = errors.New("invalid null policy, please use one of the provided")
+	ErrInvalidHint       = errors.New("invalid hint, please use one of the provided")
+)
+
+func paramFormat(k, v string) string {
+	return fmt.Sprintf("%s=%s", k, v)
+}
+
+func (p *CollapseParams) format() (string, error) {
+	if p == nil {
+		return "", ErrParamsRequired
+	}
+	if p.Field == "" {
+		return "", ErrParamsRequired
+	}
+
+	params := []string{paramFormat("field", p.Field)}
+
+	var c int
+	if p.Max != "" {
+		params = append(params, paramFormat("max", p.Max))
+		c++
+	}
+	if p.Min != "" {
+		params = append(params, paramFormat("min", p.Min))
+		c++
+	}
+	if p.Sort != "" {
+		params = append(params, paramFormat("sort", p.Sort))
+		c++
+	}
+	if c > 1 {
+		return "", ErrTooManyParams
+	}
+
+	if p.NullPolicy != nil {
+		if *p.NullPolicy != NullPolicyIgnore && *p.NullPolicy != NullPolicyCollapse && *p.NullPolicy != NullPolicyExpand {
+			return "", ErrInvalidNullPolicy
+		}
+		params = append(params, paramFormat("nullPolicy", p.NullPolicy.String()))
+	}
+
+	if p.Hint != nil {
+		if *p.Hint != HintTopFC {
+			return "", ErrInvalidHint
+		}
+		params = append(params, paramFormat("hint", p.Hint.String()))
+	}
+
+	if p.Size != "" {
+		params = append(params, paramFormat("size", p.Size))
+	}
+
+	return fmt.Sprintf("{!collapse %s}", strings.Join(params, " ")), nil
+}
+
+// Collapse sets the Collapsing Query Parser post filter that groups
+// documents according to the given parameters.
+// More Info:
+// https://lucene.apache.org/solr/guide/8_5/collapse-and-expand-results.html#collapsing-query-parser
+func (q *Query) Collapse(params *CollapseParams) error {
+	collapseString, err := params.format()
+	if err != nil {
+		return err
+	}
+	q.params.Add(OptionFilter, collapseString)
+	return nil
+}
+
+// ExpandOptions are the available options to set for the expand component
+type ExpandOptions struct {
+	Sort string
+	Rows int
+	Q    string
+	FQ   string
+}
+
+// Expand sets the parameter than returns an expand component used to expand the groups
+// that were collapsed by the Collapsing Query Parser. The optional params override
+// the original query values
+// More info:
+// https://lucene.apache.org/solr/guide/8_5/collapse-and-expand-results.html#expand-component
+func (q *Query) Expand(opts *ExpandOptions) {
+	q.params.Add("expand", "true")
+	if opts != nil {
+		if opts.Sort != "" {
+			q.params.Add("expand.sort", opts.Sort)
+		}
+		if opts.Q != "" {
+			q.params.Add("expand.q", opts.Q)
+		}
+		if opts.FQ != "" {
+			q.params.Add("expand.fq", opts.FQ)
+		}
+		if opts.Rows > 0 {
+			rv := strconv.Itoa(opts.Rows)
+			q.params.Add("expand.rows", rv)
+		}
+	}
 }

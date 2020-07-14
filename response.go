@@ -6,12 +6,13 @@ package solr
 // single document (in the case of realtimeGet) or just a status
 // (in the case of the Ping request)
 type Response struct {
-	Header *ResponseHeader         `json:"responseHeader"`
-	Data   *ResponseData           `json:"response"`
-	Error  *ResponseError          `json:"error"`
-	Debug  *map[string]interface{} `json:"debug"`
-	Doc    *Doc                    `json:"doc"`
-	Status *string                 `json:"status"`
+	Header   *ResponseHeader          `json:"responseHeader"`
+	Data     *ResponseData            `json:"response"`
+	Error    *ResponseError           `json:"error"`
+	Debug    *map[string]interface{}  `json:"debug"`
+	Doc      *Doc                     `json:"doc"`
+	Status   *string                  `json:"status"`
+	Expanded map[string]*ResponseData `json:"expanded"`
 }
 
 // ResponseHeader is populated on every response from the solr server
@@ -28,9 +29,10 @@ type ResponseHeader struct {
 // server. It contains the number of documents found, the starting
 // index (in case of a search) as well as the documents found
 type ResponseData struct {
-	NumFound int64 `json:"numFound"`
-	Start    int64 `json:"start"`
-	Docs     Docs  `json:"docs"`
+	NumFound int64   `json:"numFound"`
+	Start    int64   `json:"start"`
+	Docs     Docs    `json:"docs"`
+	MaxScore float64 `json:"maxScore,string"`
 }
 
 // ResponseError is populated in the event the response from the solr

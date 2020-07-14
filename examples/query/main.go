@@ -141,6 +141,23 @@ func main() {
 	}
 	fmt.Println(res.Data.NumFound)
 
+	// -----------
+	q5 := solr.NewQuery(nil)
+	q5.SetQuery("*:*")
+	q5.Collapse(&solr.CollapseParams{
+		Field: "year",
+	})
+	q5.Expand(nil)
+
+	fmt.Println(q5.String())
+
+	// Fire a search with that Query
+	res, err = slr.Search(ctx, q5)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println(res.Expanded["1979"].NumFound)
+
 	// Clear the database, playtime is over
 	res, err = slr.Clear(ctx)
 	if err != nil {
