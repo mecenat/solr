@@ -26,6 +26,12 @@ const (
 	OptionWaitSearcher             = "waitSearcher"
 	OptionMaxSegments              = "maxSegments"
 	OptionExpungeDeletes           = "expungeDeletes"
+	OptionMM                       = "mm"
+	OptionBoost                    = "boost"
+	OptionQueryFields              = "qf"
+	OptionBoostQuery               = "bq"
+	OptionBoostFunctions           = "bf"
+	OptionUserFields               = "uf"
 	ReturnTypeJSON                 = "json"
 	QOperationOR                   = "OR"
 	QOperationAND                  = "AND"
@@ -42,9 +48,31 @@ const (
 // `/search` request
 type DebugType string
 
+func (dt DebugType) String() string {
+	return string(dt)
+}
+
+func (dt DebugType) isValid() bool {
+	return !(dt != DebugTypeQuery && dt != DebugTypeTiming && dt != DebugTypeResults && dt != DebugTypeAll)
+}
+
 // DefType is used to restrict the available defTypes for a
 // `/search` request
 type DefType string
+
+func (dt DefType) String() string {
+	return string(dt)
+}
+
+func (dt DefType) isValid() bool {
+	return !(dt != DefTypeDisMax && dt != DefTypeEDisMax && dt != DefTypeStandard)
+}
+
+// Returned validation errors
+var (
+	ErrInvalidDefType   = errors.New("invalid defType, please use one of the provided ones")
+	ErrInvalidDebugType = errors.New("invalid debugType, please use one of the provided ones")
+)
 
 // WriteOptions contains options for write actions. Those include:
 // Commit: Autocommit all changes alongside the current request
@@ -77,10 +105,12 @@ func (opts *WriteOptions) formatQueryFromOpts() url.Values {
 
 // ReadOptions contains options for read actions. Those include:
 // Debug: Sets the type of debugging for the request
+// DefType: Sets the type of query parse to use (default: lucene)
 // Rows: Sets the number of rows to return
 type ReadOptions struct {
-	Debug DebugType
-	Rows  int
+	Debug   DebugType
+	DefType DefType
+	Rows    int
 }
 
 // Query represents the query parameters of a search. It provides
@@ -97,8 +127,11 @@ func NewQuery(opts *ReadOptions) *Query {
 	nq := &Query{}
 	nq.params = make(url.Values)
 	if opts != nil {
-		if opts.Debug != "" {
-			nq.params.Set(OptionDebug, string(DebugTypeQuery))
+		if opts.Debug != "" && opts.Debug.isValid() {
+			nq.params.Set(OptionDebug, opts.Debug.String())
+		}
+		if opts.DefType != "" && opts.DefType.isValid() {
+			nq.params.Set(OptionDefType, opts.DefType.String())
 		}
 		if opts.Rows > 0 {
 			sv := strconv.Itoa(opts.Rows)
@@ -337,4 +370,53 @@ func (q *Query) Expand(opts *ExpandOptions) {
 			q.params.Add("expand.rows", rv)
 		}
 	}
+}
+
+// SetQueryFields sets the fields to search (DisMax & eDisMax only)
+// More info:
+// https://lucene.apache.org/solr/guide/8_5/the-dismax-query-parser.html#qf-query-fields-parameter
+func (q *Query) SetQueryFields(fields []string) {
+	fieldsStr := strings.Join(fields, " ")
+	q.params.Set(OptionQueryFields, fieldsStr)
+}
+
+// BoostField is a helper function to properly format field boosting
+func BoostField(field string, boost float64) string {
+	return fmt.Sprintf("%s^%f", field, boost)
+}
+
+// SetMinimumShouldMatch sets the minimum params to match (DisMax & eDisMax only)
+// More info:
+// https://lucene.apache.org/solr/guide/8_5/the-dismax-query-parser.html#mm-minimum-should-match-parameter
+func (q *Query) SetMinimumShouldMatch(value string) {
+	q.params.Set(OptionMM, value)
+}
+
+// SetBoostFunctions sets the boost functions param (DisMax & eDisMax only)
+// More info:
+// https://lucene.apache.org/solr/guide/8_5/the-dismax-query-parser.html#bf-boost-functions-parameter
+func (q *Query) SetBoostFunctions(value string) {
+	q.params.Set(OptionBoostFunctions, value)
+}
+
+// SetBoostQuery sets the boost query param (DisMax & eDisMax only)
+// More info:
+// https://lucene.apache.org/solr/guide/8_5/the-dismax-query-parser.html#bq-boost-query-parameter
+func (q *Query) SetBoostQuery(value string) {
+	q.params.Set(OptionBoostQuery, value)
+}
+
+// SetBoost sets the boost param (eDisMax only)
+// More info:
+// https://lucene.apache.org/solr/guide/8_5/the-extended-dismax-query-parser.html#extended-dismax-parameters
+func (q *Query) SetBoost(value string) {
+	q.params.Set(OptionBoost, value)
+}
+
+// SetUserFields sets the fields a user is allowed to query (eDisMax only)
+// More info:
+// https://lucene.apache.org/solr/guide/8_5/the-extended-dismax-query-parser.html#extended-dismax-parameters
+func (q *Query) SetUserFields(fields []string) {
+	fieldsStr := strings.Join(fields, " ")
+	q.params.Set(OptionUserFields, fieldsStr)
 }
