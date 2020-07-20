@@ -142,6 +142,7 @@ func main() {
 	fmt.Println(res.Data.NumFound)
 
 	// -----------
+
 	q5 := solr.NewQuery(nil)
 	q5.SetQuery("*:*")
 	q5.Collapse(&solr.CollapseParams{
@@ -158,6 +159,56 @@ func main() {
 	}
 	fmt.Println(res.Expanded["1979"].NumFound)
 
+	// -----------
+
+	q6 := solr.NewQuery(&solr.ReadOptions{
+		Rows: 2,
+	})
+	q6.SetQuery("*:*")
+
+	q6.Group(&solr.GroupParams{
+		Field:            "year",
+		ShowGroupsNumber: true,
+	})
+
+	fmt.Println(q6.String())
+
+	// Fire a search with that Query
+	res, err = slr.Search(ctx, q6)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Println(res.Grouped["year"].Matches)
+	fmt.Println(res.Grouped["year"].NumberOfGroups)
+	i := res.Grouped["year"].Groups[0].Value.(string)
+	no := res.Grouped["year"].Groups[0].DocList.NumFound
+	fmt.Println(i, no)
+
+	// -----------
+
+	q7 := solr.NewQuery(&solr.ReadOptions{
+		Rows: 1,
+	})
+	q7.SetQuery("*:*")
+
+	q7.AddFacet(&solr.Facet{
+		Field:    "genre",
+		MinCount: 1,
+	})
+
+	q7.AddFacetPivot("genre,directed_by", 1)
+
+	fmt.Println(q7.String())
+
+	// Fire a search with that Query
+	res, err = slr.Search(ctx, q7)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Println("horror", res.FacetCounts.Fields.Get("genre")["horror"])
+	fmt.Println(res.FacetCounts.Pivot["genre,directed_by"][0].Pivot[0].Count)
 	// Clear the database, playtime is over
 	res, err = slr.Clear(ctx)
 	if err != nil {

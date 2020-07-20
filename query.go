@@ -10,38 +10,67 @@ import (
 
 // Query Options and other constants
 const (
-	OptionDebug                    = "debug"
-	OptionDefType                  = "defType"
-	OptionQ                        = "q"
-	OptionQOperation               = "q.op"
-	OptionFilter                   = "fq"
-	OptionFieldList                = "fl"
-	OptionRows                     = "rows"
-	OptionStart                    = "start"
-	OptionSort                     = "sort"
-	OptionWT                       = "wt"
-	OptionCommit                   = "commit"
-	OptionOverwrite                = "overwrite"
-	OptionCommitWithin             = "commitWithin"
-	OptionWaitSearcher             = "waitSearcher"
-	OptionMaxSegments              = "maxSegments"
-	OptionExpungeDeletes           = "expungeDeletes"
-	OptionMM                       = "mm"
-	OptionBoost                    = "boost"
-	OptionQueryFields              = "qf"
-	OptionBoostQuery               = "bq"
-	OptionBoostFunctions           = "bf"
-	OptionUserFields               = "uf"
-	ReturnTypeJSON                 = "json"
-	QOperationOR                   = "OR"
-	QOperationAND                  = "AND"
-	DefTypeDisMax        DefType   = "dismax"
-	DefTypeEDisMax       DefType   = "edismax"
-	DefTypeStandard      DefType   = "lucene"
-	DebugTypeQuery       DebugType = "query"
-	DebugTypeTiming      DebugType = "timing"
-	DebugTypeResults     DebugType = "results"
-	DebugTypeAll         DebugType = "all"
+	OptionDebug                        = "debug"
+	OptionDefType                      = "defType"
+	OptionQ                            = "q"
+	OptionQOperation                   = "q.op"
+	OptionFilter                       = "fq"
+	OptionFieldList                    = "fl"
+	OptionRows                         = "rows"
+	OptionStart                        = "start"
+	OptionSort                         = "sort"
+	OptionWT                           = "wt"
+	OptionCommit                       = "commit"
+	OptionOverwrite                    = "overwrite"
+	OptionCommitWithin                 = "commitWithin"
+	OptionWaitSearcher                 = "waitSearcher"
+	OptionMaxSegments                  = "maxSegments"
+	OptionExpungeDeletes               = "expungeDeletes"
+	OptionMM                           = "mm"
+	OptionBoost                        = "boost"
+	OptionQueryFields                  = "qf"
+	OptionBoostQuery                   = "bq"
+	OptionBoostFunctions               = "bf"
+	OptionUserFields                   = "uf"
+	OptionCollapseField                = "field"
+	OptionCollapseMax                  = "max"
+	OptionCollapseMin                  = "min"
+	OptionCollapseSort                 = "sort"
+	OptionCollapseNullPolicy           = "nullPolicy"
+	OptionCollapseHint                 = "hint"
+	OptionCollapseSize                 = "size"
+	OptionExpand                       = "expand"
+	OptionExpandSort                   = "expand.sort"
+	OptionExpandQ                      = "expand.q"
+	OptionExpandFQ                     = "expand.fq"
+	OptionExpandRows                   = "expand.rows"
+	OptionFacet                        = "facet"
+	OptionFacetField                   = "facet.field"
+	OptionLimit                        = "limit"
+	OptionPrefix                       = "prefix"
+	OptionContains                     = "contains"
+	OptionMissing                      = "missing"
+	OptionMinCount                     = "mincount"
+	OptionExcludeTerms                 = "excludeTerms"
+	OptionFacetPivot                   = "facet.pivot"
+	OptionGroup                        = "group"
+	OptionGroupField                   = "group.field"
+	OptionGroupNGroups                 = "group.ngroups"
+	OptionGroupLimit                   = "group.limit"
+	OptionGroupOffset                  = "group.offset"
+	OptionGroupQuery                   = "group.query"
+	OptionGroupFunc                    = "group.func"
+	OptionGroupSort                    = "group.sort"
+	ReturnTypeJSON                     = "json"
+	QOperationOR                       = "OR"
+	QOperationAND                      = "AND"
+	DefTypeDisMax            DefType   = "dismax"
+	DefTypeEDisMax           DefType   = "edismax"
+	DefTypeStandard          DefType   = "lucene"
+	DebugTypeQuery           DebugType = "query"
+	DebugTypeTiming          DebugType = "timing"
+	DebugTypeResults         DebugType = "results"
+	DebugTypeAll             DebugType = "all"
 )
 
 // DebugType is used to restrict the available debug types for a
@@ -287,19 +316,19 @@ func (p *CollapseParams) format() (string, error) {
 		return "", ErrParamsRequired
 	}
 
-	params := []string{paramFormat("field", p.Field)}
+	params := []string{paramFormat(OptionCollapseField, p.Field)}
 
 	var c int
 	if p.Max != "" {
-		params = append(params, paramFormat("max", p.Max))
+		params = append(params, paramFormat(OptionCollapseMax, p.Max))
 		c++
 	}
 	if p.Min != "" {
-		params = append(params, paramFormat("min", p.Min))
+		params = append(params, paramFormat(OptionCollapseMin, p.Min))
 		c++
 	}
 	if p.Sort != "" {
-		params = append(params, paramFormat("sort", p.Sort))
+		params = append(params, paramFormat(OptionCollapseSort, p.Sort))
 		c++
 	}
 	if c > 1 {
@@ -310,18 +339,18 @@ func (p *CollapseParams) format() (string, error) {
 		if *p.NullPolicy != NullPolicyIgnore && *p.NullPolicy != NullPolicyCollapse && *p.NullPolicy != NullPolicyExpand {
 			return "", ErrInvalidNullPolicy
 		}
-		params = append(params, paramFormat("nullPolicy", p.NullPolicy.String()))
+		params = append(params, paramFormat(OptionCollapseNullPolicy, p.NullPolicy.String()))
 	}
 
 	if p.Hint != nil {
 		if *p.Hint != HintTopFC {
 			return "", ErrInvalidHint
 		}
-		params = append(params, paramFormat("hint", p.Hint.String()))
+		params = append(params, paramFormat(OptionCollapseHint, p.Hint.String()))
 	}
 
 	if p.Size != "" {
-		params = append(params, paramFormat("size", p.Size))
+		params = append(params, paramFormat(OptionCollapseSize, p.Size))
 	}
 
 	return fmt.Sprintf("{!collapse %s}", strings.Join(params, " ")), nil
@@ -354,20 +383,20 @@ type ExpandOptions struct {
 // More info:
 // https://lucene.apache.org/solr/guide/8_5/collapse-and-expand-results.html#expand-component
 func (q *Query) Expand(opts *ExpandOptions) {
-	q.params.Add("expand", "true")
+	q.params.Add(OptionExpand, "true")
 	if opts != nil {
 		if opts.Sort != "" {
-			q.params.Add("expand.sort", opts.Sort)
+			q.params.Add(OptionExpandSort, opts.Sort)
 		}
 		if opts.Q != "" {
-			q.params.Add("expand.q", opts.Q)
+			q.params.Add(OptionExpandQ, opts.Q)
 		}
 		if opts.FQ != "" {
-			q.params.Add("expand.fq", opts.FQ)
+			q.params.Add(OptionExpandFQ, opts.FQ)
 		}
 		if opts.Rows > 0 {
 			rv := strconv.Itoa(opts.Rows)
-			q.params.Add("expand.rows", rv)
+			q.params.Add(OptionExpandRows, rv)
 		}
 	}
 }
@@ -419,4 +448,114 @@ func (q *Query) SetBoost(value string) {
 func (q *Query) SetUserFields(fields []string) {
 	fieldsStr := strings.Join(fields, " ")
 	q.params.Set(OptionUserFields, fieldsStr)
+}
+
+// Facet represent a facet for a specific field along with
+// some of the available options for that facet.
+type Facet struct {
+	Field        string
+	Prefix       string
+	Contains     string
+	Limit        int
+	MinCount     int
+	Missing      bool
+	ExcludeTerms []string
+}
+
+func (f *Facet) format(param string) string {
+	return fmt.Sprintf("f.%s.facet.%s", f.Field, param)
+}
+
+// AddFacet adds a facet to the query, along with field specific options.
+// Not all options are supported, but functions like AddParam, SetParam
+// can help with those missing options.
+// More info:
+// https://lucene.apache.org/solr/guide/8_5/faceting.html
+func (q *Query) AddFacet(f *Facet) {
+	q.params.Set(OptionFacet, "true")
+	q.params.Add(OptionFacetField, f.Field)
+	if f.MinCount > 0 {
+		minCount := strconv.Itoa(f.MinCount)
+		q.params.Set(f.format(OptionMinCount), minCount)
+	}
+	if f.Limit != 0 {
+		limit := strconv.Itoa(f.Limit)
+		q.params.Set(f.format(OptionLimit), limit)
+	}
+	if f.Prefix != "" {
+		q.params.Set(f.format(OptionPrefix), f.Prefix)
+	}
+	if f.Contains != "" {
+		q.params.Set(f.format(OptionContains), f.Contains)
+	}
+	if f.Missing {
+		q.params.Set(f.format(OptionMissing), "true")
+	}
+	if len(f.ExcludeTerms) > 1 {
+		q.params.Set(f.format(OptionExcludeTerms), "true")
+	}
+}
+
+// AddFacetPivot adds a facet pivot. The given fieldsString should contain the fields
+// to be faceted separated with a comma. The minCount parameter defines the minimum
+// number of documents that need to match in order for the facet to be included
+// in the results. The default is 1.
+// More info:
+// https://lucene.apache.org/solr/guide/8_5/faceting.html#pivot-decision-tree-faceting
+func (q *Query) AddFacetPivot(fieldsString string, minCount int) {
+	q.params.Set(OptionFacet, "true")
+	q.params.Add(OptionFacetPivot, fieldsString)
+	if minCount > 1 {
+		minCountStr := strconv.Itoa(minCount)
+		q.params.Set(fmt.Sprintf("%s.%s", OptionFacetPivot, OptionMinCount), minCountStr)
+	}
+}
+
+// GroupParams contains the available parameters to finetune result
+// grouping. Of all the params only Field is required
+type GroupParams struct {
+	Field            string
+	Func             string
+	Query            string
+	Limit            int
+	Offset           int
+	Sort             string
+	ShowGroupsNumber bool
+}
+
+// Group sets the grouping parameters for a query to facilitate result
+// grouping. The GroupParams must be present with at least the field
+// parameter filled.
+// More info:
+// https://lucene.apache.org/solr/guide/8_5/result-grouping.html
+func (q *Query) Group(params *GroupParams) error {
+	if params == nil {
+		return ErrParamsRequired
+	}
+	if params.Field == "" {
+		return ErrParamsRequired
+	}
+
+	q.params.Set(OptionGroup, "true")
+	q.params.Set(OptionGroupField, params.Field)
+
+	if params.ShowGroupsNumber {
+		q.params.Set(OptionGroupNGroups, "true")
+	}
+	if params.Limit > 1 {
+		q.params.Set(OptionGroupLimit, strconv.Itoa(params.Limit))
+	}
+	if params.Offset > 0 {
+		q.params.Set(OptionGroupOffset, strconv.Itoa(params.Offset))
+	}
+	if params.Sort != "" {
+		q.params.Set(OptionGroupSort, params.Sort)
+	}
+	if params.Query != "" {
+		q.params.Set(OptionGroupQuery, params.Query)
+	}
+	if params.Func != "" {
+		q.params.Set(OptionGroupFunc, params.Func)
+	}
+	return nil
 }
