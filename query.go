@@ -160,6 +160,7 @@ func NewQuery(opts *ReadOptions) *Query {
 			nq.params.Set(OptionDebug, opts.Debug.String())
 		}
 		if opts.DefType != "" && opts.DefType.isValid() {
+			fmt.Println("DEFTYPE")
 			nq.params.Set(OptionDefType, opts.DefType.String())
 		}
 		if opts.Rows > 0 {

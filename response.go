@@ -36,10 +36,35 @@ type ResponseHeader struct {
 // server. It contains the number of documents found, the starting
 // index (in case of a search) as well as the documents found
 type ResponseData struct {
-	NumFound int64   `json:"numFound"`
-	Start    int64   `json:"start"`
-	Docs     Docs    `json:"docs"`
-	MaxScore float64 `json:"maxScore,string"`
+	NumFound int64     `json:"numFound"`
+	Start    int64     `json:"start"`
+	Docs     Docs      `json:"docs"`
+	MaxScore *MaxScore `json:"maxScore"` //TODO(KK): Fix this
+}
+
+// MaxScore is used as a struct due to the fact that solr
+// may return it as a float or as a string indicating
+// "NaN"
+type MaxScore struct {
+	Valid bool
+	Score float64
+}
+
+// UnmarshalJSON implements the unmarshaler interface
+func (m *MaxScore) UnmarshalJSON(b []byte) error {
+	var i interface{}
+	err := json.Unmarshal(b, &i)
+	if err != nil {
+		return err
+	}
+	switch v := i.(type) {
+	case float64:
+		m.Score = v
+		m.Valid = true
+	default:
+		m.Valid = false
+	}
+	return nil
 }
 
 // ResponseError is populated in the event the response from the solr

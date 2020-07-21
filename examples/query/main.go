@@ -143,8 +143,12 @@ func main() {
 
 	// -----------
 
-	q5 := solr.NewQuery(nil)
+	q5 := solr.NewQuery(&solr.ReadOptions{
+		DefType: solr.DefTypeEDisMax,
+	})
 	q5.SetQuery("*:*")
+	// Get all fields as well as score
+	q5.AddField("*,score")
 	q5.Collapse(&solr.CollapseParams{
 		Field: "year",
 	})
