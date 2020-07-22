@@ -33,16 +33,16 @@ func NewSingleClient(ctx context.Context, host, core string, client *http.Client
 	return solrClient, nil
 }
 
-func (c *SingleClient) formatURL(path string, query url.Values) string {
-	if query != nil {
-		return c.BasePath + path + "?" + query.Encode()
+func (c *SingleClient) formatURL(path string, query string) string {
+	if query != "" {
+		return c.BasePath + path + "?" + query
 	}
 	return c.BasePath + path
 }
 
 // Ping ...
 func (c *SingleClient) Ping(ctx context.Context) error {
-	url := c.formatURL("/admin/ping", nil)
+	url := c.formatURL("/admin/ping", "")
 	res, err := request(ctx, c.conn.httpClient, http.MethodGet, url, nil)
 	if err != nil {
 		return err
@@ -55,7 +55,7 @@ func (c *SingleClient) Ping(ctx context.Context) error {
 
 // Search ...
 func (c *SingleClient) Search(ctx context.Context, q *Query) (*Response, error) {
-	url := c.formatURL("/select", q.params)
+	url := c.formatURL("/select", q.String())
 	return read(ctx, c.conn.httpClient, url)
 }
 
@@ -63,7 +63,7 @@ func (c *SingleClient) Search(ctx context.Context, q *Query) (*Response, error) 
 func (c *SingleClient) Get(ctx context.Context, id string) (*Response, error) {
 	vals := make(url.Values)
 	vals.Set("id", id)
-	url := c.formatURL("/get", vals)
+	url := c.formatURL("/get", vals.Encode())
 	return read(ctx, c.conn.httpClient, url)
 }
 
@@ -72,25 +72,25 @@ func (c *SingleClient) BatchGet(ctx context.Context, ids []string, filter string
 	vals := make(url.Values)
 	vals.Set("ids", strings.Join(ids, ","))
 	vals.Set("fq", filter)
-	url := c.formatURL("/get", vals)
+	url := c.formatURL("/get", vals.Encode())
 	return read(ctx, c.conn.httpClient, url)
 }
 
 // Create ...
 func (c *SingleClient) Create(ctx context.Context, item interface{}, opts *WriteOptions) (*Response, error) {
-	url := c.formatURL("/update/json/docs", opts.formatQueryFromOpts())
+	url := c.formatURL("/update/json/docs", opts.formatQueryFromOpts().Encode())
 	return create(ctx, c.conn.httpClient, url, item)
 }
 
 // BatchCreate ...
 func (c *SingleClient) BatchCreate(ctx context.Context, items interface{}, opts *WriteOptions) (*Response, error) {
-	url := c.formatURL("/update", opts.formatQueryFromOpts())
+	url := c.formatURL("/update", opts.formatQueryFromOpts().Encode())
 	return batchCreate(ctx, c.conn.httpClient, url, items)
 }
 
 // Update ...
 func (c *SingleClient) Update(ctx context.Context, item *UpdatedFields, opts *WriteOptions) (*Response, error) {
-	url := c.formatURL("/update", opts.formatQueryFromOpts())
+	url := c.formatURL("/update", opts.formatQueryFromOpts().Encode())
 	return update(ctx, c.conn.httpClient, url, item)
 }
 
@@ -108,19 +108,19 @@ func (c *SingleClient) Rollback(ctx context.Context) (*Response, error) {
 
 // Optimize ...
 func (c *SingleClient) Optimize(ctx context.Context, opts *OptimizeOptions) (*Response, error) {
-	url := c.formatURL("/update", nil)
+	url := c.formatURL("/update", "")
 	return optimize(ctx, c.conn.httpClient, url, opts)
 }
 
 // DeleteByID ...
 func (c *SingleClient) DeleteByID(ctx context.Context, id string, opts *WriteOptions) (*Response, error) {
-	url := c.formatURL("/update", opts.formatQueryFromOpts())
+	url := c.formatURL("/update", opts.formatQueryFromOpts().Encode())
 	return delete(ctx, c.conn.httpClient, url, formatDeleteByID(id))
 }
 
 // DeleteByQuery ...
 func (c *SingleClient) DeleteByQuery(ctx context.Context, query string, opts *WriteOptions) (*Response, error) {
-	url := c.formatURL("/update", opts.formatQueryFromOpts())
+	url := c.formatURL("/update", opts.formatQueryFromOpts().Encode())
 	return delete(ctx, c.conn.httpClient, url, formatDeleteByQuery(query))
 }
 
@@ -131,6 +131,6 @@ func (c *SingleClient) Clear(ctx context.Context) (*Response, error) {
 
 // CustomUpdate ...
 func (c *SingleClient) CustomUpdate(ctx context.Context, item *UpdateBuilder) (*Response, error) {
-	url := c.formatURL("/update", nil)
+	url := c.formatURL("/update", "")
 	return customUpdate(ctx, c.conn.httpClient, url, item)
 }

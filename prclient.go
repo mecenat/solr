@@ -46,23 +46,23 @@ func NewPrimaryReplicaClient(ctx context.Context, pHost, pCore, rHost, rCore str
 	return solrClient, nil
 }
 
-func (c *PRClient) formatPrimaryURL(path string, query url.Values) string {
-	if query != nil {
-		return c.PrimaryPath + path + "?" + query.Encode()
+func (c *PRClient) formatPrimaryURL(path string, query string) string {
+	if query != "" {
+		return c.PrimaryPath + path + "?" + query
 	}
 	return c.PrimaryPath + path
 }
 
-func (c *PRClient) formatReplicaURL(path string, query url.Values) string {
-	if query != nil {
-		return c.ReplicaPath + path + "?" + query.Encode()
+func (c *PRClient) formatReplicaURL(path string, query string) string {
+	if query != "" {
+		return c.ReplicaPath + path + "?" + query
 	}
 	return c.ReplicaPath + path
 }
 
 // Ping tests the connectivity of both servers
 func (c *PRClient) Ping(ctx context.Context) error {
-	url := c.formatPrimaryURL("/admin/ping", nil)
+	url := c.formatPrimaryURL("/admin/ping", "")
 	res, err := request(ctx, c.primary.httpClient, http.MethodGet, url, nil)
 	if err != nil {
 		return err
@@ -70,7 +70,7 @@ func (c *PRClient) Ping(ctx context.Context) error {
 	if res.Status != nil && *res.Status != "OK" {
 		return fmt.Errorf("error pinging primary server, status: %s", *res.Status)
 	}
-	url = c.formatReplicaURL("/admin/ping", nil)
+	url = c.formatReplicaURL("/admin/ping", "")
 	res, err = request(ctx, c.replica.httpClient, http.MethodGet, url, nil)
 	if err != nil {
 		return err
@@ -83,7 +83,7 @@ func (c *PRClient) Ping(ctx context.Context) error {
 
 // Search ...
 func (c *PRClient) Search(ctx context.Context, q *Query) (*Response, error) {
-	url := c.formatReplicaURL("/select", q.params)
+	url := c.formatReplicaURL("/select", q.String())
 	return read(ctx, c.replica.httpClient, url)
 }
 
@@ -91,7 +91,7 @@ func (c *PRClient) Search(ctx context.Context, q *Query) (*Response, error) {
 func (c *PRClient) Get(ctx context.Context, id string) (*Response, error) {
 	vals := make(url.Values)
 	vals.Set("id", id)
-	url := c.formatReplicaURL("/get", vals)
+	url := c.formatReplicaURL("/get", vals.Encode())
 	return read(ctx, c.replica.httpClient, url)
 }
 
@@ -100,55 +100,55 @@ func (c *PRClient) BatchGet(ctx context.Context, ids []string, filter string) (*
 	vals := make(url.Values)
 	vals.Set("ids", strings.Join(ids, ","))
 	vals.Set("fq", filter)
-	url := c.formatReplicaURL("/get", vals)
+	url := c.formatReplicaURL("/get", vals.Encode())
 	return read(ctx, c.replica.httpClient, url)
 }
 
 // Create ...
 func (c *PRClient) Create(ctx context.Context, item interface{}, opts *WriteOptions) (*Response, error) {
-	url := c.formatPrimaryURL("/update/json/docs", opts.formatQueryFromOpts())
+	url := c.formatPrimaryURL("/update/json/docs", opts.formatQueryFromOpts().Encode())
 	return create(ctx, c.primary.httpClient, url, item)
 }
 
 // BatchCreate ...
 func (c *PRClient) BatchCreate(ctx context.Context, items interface{}, opts *WriteOptions) (*Response, error) {
-	url := c.formatPrimaryURL("/update", opts.formatQueryFromOpts())
+	url := c.formatPrimaryURL("/update", opts.formatQueryFromOpts().Encode())
 	return batchCreate(ctx, c.primary.httpClient, url, items)
 }
 
 // Update ...
 func (c *PRClient) Update(ctx context.Context, item *UpdatedFields, opts *WriteOptions) (*Response, error) {
-	url := c.formatPrimaryURL("/update", opts.formatQueryFromOpts())
+	url := c.formatPrimaryURL("/update", opts.formatQueryFromOpts().Encode())
 	return update(ctx, c.primary.httpClient, url, item)
 }
 
 // Commit ...
 func (c *PRClient) Commit(ctx context.Context, opts *CommitOptions) (*Response, error) {
-	url := c.formatPrimaryURL("/update", nil)
+	url := c.formatPrimaryURL("/update", "")
 	return commit(ctx, c.primary.httpClient, url, opts)
 }
 
 // Rollback ...
 func (c *PRClient) Rollback(ctx context.Context) (*Response, error) {
-	url := c.formatPrimaryURL("/update?commit=true", nil)
+	url := c.formatPrimaryURL("/update?commit=true", "")
 	return rollback(ctx, c.primary.httpClient, url)
 }
 
 // Optimize ...
 func (c *PRClient) Optimize(ctx context.Context, opts *OptimizeOptions) (*Response, error) {
-	url := c.formatPrimaryURL("/update", nil)
+	url := c.formatPrimaryURL("/update", "")
 	return optimize(ctx, c.conn.httpClient, url, opts)
 }
 
 // DeleteByID ...
 func (c *PRClient) DeleteByID(ctx context.Context, id string, opts *WriteOptions) (*Response, error) {
-	url := c.formatPrimaryURL("/update", opts.formatQueryFromOpts())
+	url := c.formatPrimaryURL("/update", opts.formatQueryFromOpts().Encode())
 	return delete(ctx, c.primary.httpClient, url, formatDeleteByID(id))
 }
 
 // DeleteByQuery ...
 func (c *PRClient) DeleteByQuery(ctx context.Context, query string, opts *WriteOptions) (*Response, error) {
-	url := c.formatPrimaryURL("/update", opts.formatQueryFromOpts())
+	url := c.formatPrimaryURL("/update", opts.formatQueryFromOpts().Encode())
 	return delete(ctx, c.primary.httpClient, url, formatDeleteByQuery(query))
 }
 
@@ -159,6 +159,6 @@ func (c *PRClient) Clear(ctx context.Context) (*Response, error) {
 
 // CustomUpdate ...
 func (c *PRClient) CustomUpdate(ctx context.Context, item *UpdateBuilder) (*Response, error) {
-	url := c.formatPrimaryURL("/update", nil)
+	url := c.formatPrimaryURL("/update", "")
 	return customUpdate(ctx, c.primary.httpClient, url, item)
 }
