@@ -145,7 +145,8 @@ type ReadOptions struct {
 // Query represents the query parameters of a search. It provides
 // helper methods for most of the available solr query params.
 type Query struct {
-	Q      []string
+	q      []string
+	qOp    string
 	params url.Values
 }
 
@@ -153,14 +154,13 @@ type Query struct {
 // rows limit and a debug type. It sets by default the return type
 // to JSON, as it is the only type supported by this library.
 func NewQuery(opts *ReadOptions) *Query {
-	nq := &Query{}
+	nq := &Query{qOp: QOperationOR}
 	nq.params = make(url.Values)
 	if opts != nil {
 		if opts.Debug != "" && opts.Debug.isValid() {
 			nq.params.Set(OptionDebug, opts.Debug.String())
 		}
 		if opts.DefType != "" && opts.DefType.isValid() {
-			fmt.Println("DEFTYPE")
 			nq.params.Set(OptionDefType, opts.DefType.String())
 		}
 		if opts.Rows > 0 {
@@ -186,11 +186,17 @@ func (q *Query) DelParam(key string) {
 	q.params.Del(key)
 }
 
-// AddQuery adds a key-value pair to the Q parameter. Warning:
-// Using this will overwrite any call to the `SetQuery`
-// method. For complex logic use that instead
-func (q *Query) AddQuery(key, value string) {
-	q.Q = append(q.Q, fmt.Sprintf("%s:%s", key, value))
+// AddQuery adds a key-value pair to the Q parameter and facilitates
+// the formulation of simple boolean queries. The field can be an
+// empty string in the case of text search or an existing qf
+// parameter. Using this will overwrite any call to the
+// `SetQuery` method. For complex logic use that instead
+func (q *Query) AddQuery(field, value string) {
+	if field == "" {
+		q.q = append(q.q, value)
+	} else {
+		q.q = append(q.q, fmt.Sprintf("%s:%s", field, value))
+	}
 }
 
 // SetQuery sets the Q parameter of the query.
@@ -201,13 +207,13 @@ func (q *Query) SetQuery(value string) {
 // SetOperationAND sets the operation for the Q parameter
 // to AND (only when using `AddQuery`)
 func (q *Query) SetOperationAND() {
-	q.params.Set(OptionQOperation, QOperationAND)
+	q.qOp = QOperationAND
 }
 
 // SetOperationOR sets the operation for the Q parameter
 // to OR (only when using `AddQuery`)
 func (q *Query) SetOperationOR() {
-	q.params.Set(OptionQOperation, QOperationOR)
+	q.qOp = QOperationOR
 }
 
 // AddFilter adds a key-value pair on which to filter the query.
@@ -255,8 +261,8 @@ func (q *Query) SetSort(value string) {
 // }
 
 func (q *Query) String() string {
-	if len(q.Q) > 0 {
-		q.params.Set(OptionQ, strings.Join(q.Q, ", "))
+	if len(q.q) > 0 {
+		q.params.Set(OptionQ, strings.Join(q.q, fmt.Sprintf(" %s ", q.qOp)))
 	}
 	q.params.Set(OptionWT, ReturnTypeJSON)
 	return q.params.Encode()
