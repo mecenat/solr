@@ -516,7 +516,7 @@ func (q *Query) AddFacetPivot(fieldsString string, minCount int) {
 // grouping. Of all the params only Field is required
 type GroupParams struct {
 	Field            string
-	Func             string
+	Func             []string
 	Query            []string
 	Limit            int
 	Offset           int
@@ -533,7 +533,7 @@ func (q *Query) Group(params *GroupParams) error {
 	if params == nil {
 		return ErrParamsRequired
 	}
-	if params.Field == "" && len(params.Query) == 0 && params.Func == "" {
+	if params.Field == "" && len(params.Query) == 0 && len(params.Func) == 0 {
 		return ErrParamsRequired
 	}
 
@@ -559,8 +559,10 @@ func (q *Query) Group(params *GroupParams) error {
 			q.params.Add(OptionGroupQuery, i)
 		}
 	}
-	if params.Func != "" {
-		q.params.Set(OptionGroupFunc, params.Func)
+	if len(params.Func) > 0 {
+		for _, i := range params.Query {
+			q.params.Add(OptionGroupFunc, i)
+		}
 	}
 	return nil
 }

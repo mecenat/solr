@@ -181,14 +181,14 @@ type Stats struct {
 // func. Therefore the Grouped stuct separates them to facilitate
 // unmarshaling and ease of use.
 type Grouped struct {
-	ByField       map[string]*GroupField
-	ByQueryOrFunc map[string]*Group
+	ByFieldOrFunc map[string]*GroupField
+	ByQuery       map[string]*Group
 }
 
 // UnmarshalJSON implements the unmarshaler interface.
 func (g *Grouped) UnmarshalJSON(b []byte) error {
-	g.ByField = make(map[string]*GroupField)
-	g.ByQueryOrFunc = make(map[string]*Group)
+	g.ByFieldOrFunc = make(map[string]*GroupField)
+	g.ByQuery = make(map[string]*Group)
 
 	var m map[string]interface{}
 	err := json.Unmarshal(b, &m)
@@ -210,14 +210,14 @@ func (g *Grouped) UnmarshalJSON(b []byte) error {
 				if err != nil {
 					return err
 				}
-				g.ByField[key] = &gf
+				g.ByFieldOrFunc[key] = &gf
 			} else {
 				var gq Group
 				err = json.Unmarshal(valBytes, &gq)
 				if err != nil {
 					return err
 				}
-				g.ByQueryOrFunc[key] = &gq
+				g.ByQuery[key] = &gq
 			}
 		}
 	}

@@ -183,10 +183,10 @@ func main() {
 		log.Fatal(err)
 	}
 
-	fmt.Println(res.Grouped.ByField["year"].Matches)
-	fmt.Println(res.Grouped.ByField["year"].NumberOfGroups)
-	i := res.Grouped.ByField["year"].Groups[0].Value.(string)
-	no := res.Grouped.ByField["year"].Groups[0].DocList.NumFound
+	fmt.Println(res.Grouped.ByFieldOrFunc["year"].Matches)
+	fmt.Println(res.Grouped.ByFieldOrFunc["year"].NumberOfGroups)
+	i := res.Grouped.ByFieldOrFunc["year"].Groups[0].Value.(string)
+	no := res.Grouped.ByFieldOrFunc["year"].Groups[0].DocList.NumFound
 	fmt.Println(i, no)
 
 	// -----------
@@ -234,7 +234,7 @@ func main() {
 	}
 
 	fmt.Println(res.Grouped)
-	no = res.Grouped.ByQueryOrFunc["year:(!1968)"].DocList.NumFound
+	no = res.Grouped.ByQuery["year:(!1968)"].DocList.NumFound
 	fmt.Println("!year:1968", no)
 
 	// Clear the database, playtime is over
