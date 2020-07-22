@@ -36,10 +36,10 @@ type ResponseHeader struct {
 // server. It contains the number of documents found, the starting
 // index (in case of a search) as well as the documents found
 type ResponseData struct {
-	NumFound int64     `json:"numFound"`
-	Start    int64     `json:"start"`
-	Docs     Docs      `json:"docs"`
-	MaxScore *MaxScore `json:"maxScore"` //TODO(KK): Fix this
+	NumFound int64    `json:"numFound"`
+	Start    int64    `json:"start"`
+	Docs     Docs     `json:"docs"`
+	MaxScore MaxScore `json:"maxScore"`
 }
 
 // MaxScore is used as a struct due to the fact that solr
