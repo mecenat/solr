@@ -183,10 +183,10 @@ func main() {
 		log.Fatal(err)
 	}
 
-	fmt.Println(res.Grouped["year"].Matches)
-	fmt.Println(res.Grouped["year"].NumberOfGroups)
-	i := res.Grouped["year"].Groups[0].Value.(string)
-	no := res.Grouped["year"].Groups[0].DocList.NumFound
+	fmt.Println(res.Grouped.ByField["year"].Matches)
+	fmt.Println(res.Grouped.ByField["year"].NumberOfGroups)
+	i := res.Grouped.ByField["year"].Groups[0].Value.(string)
+	no := res.Grouped.ByField["year"].Groups[0].DocList.NumFound
 	fmt.Println(i, no)
 
 	// -----------
@@ -213,6 +213,30 @@ func main() {
 
 	fmt.Println("horror", res.FacetCounts.Fields.Get("genre")["horror"])
 	fmt.Println(res.FacetCounts.Pivot["genre,directed_by"][0].Pivot[0].Count)
+
+	// -----------
+
+	q8 := solr.NewQuery(&solr.ReadOptions{
+		Rows: 2,
+	})
+	q8.SetQuery("*:*")
+
+	q8.Group(&solr.GroupParams{
+		Query: []string{"year:1968", "year:(!1968)"},
+	})
+
+	fmt.Println(q8.String())
+
+	// Fire a search with that Query
+	res, err = slr.Search(ctx, q8)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Println(res.Grouped)
+	no = res.Grouped.ByQueryOrFunc["year:(!1968)"].DocList.NumFound
+	fmt.Println("!year:1968", no)
+
 	// Clear the database, playtime is over
 	res, err = slr.Clear(ctx)
 	if err != nil {

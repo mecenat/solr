@@ -517,7 +517,7 @@ func (q *Query) AddFacetPivot(fieldsString string, minCount int) {
 type GroupParams struct {
 	Field            string
 	Func             string
-	Query            string
+	Query            []string
 	Limit            int
 	Offset           int
 	Sort             string
@@ -533,13 +533,15 @@ func (q *Query) Group(params *GroupParams) error {
 	if params == nil {
 		return ErrParamsRequired
 	}
-	if params.Field == "" {
+	if params.Field == "" && len(params.Query) == 0 && params.Func == "" {
 		return ErrParamsRequired
 	}
 
 	q.params.Set(OptionGroup, "true")
-	q.params.Set(OptionGroupField, params.Field)
 
+	if params.Field != "" {
+		q.params.Set(OptionGroupField, params.Field)
+	}
 	if params.ShowGroupsNumber {
 		q.params.Set(OptionGroupNGroups, "true")
 	}
@@ -552,8 +554,10 @@ func (q *Query) Group(params *GroupParams) error {
 	if params.Sort != "" {
 		q.params.Set(OptionGroupSort, params.Sort)
 	}
-	if params.Query != "" {
-		q.params.Set(OptionGroupQuery, params.Query)
+	if len(params.Query) > 0 {
+		for _, i := range params.Query {
+			q.params.Add(OptionGroupQuery, i)
+		}
 	}
 	if params.Func != "" {
 		q.params.Set(OptionGroupFunc, params.Func)

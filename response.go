@@ -19,7 +19,7 @@ type Response struct {
 	Status      *string                  `json:"status"`
 	Expanded    map[string]*ResponseData `json:"expanded"`
 	FacetCounts *FacetCounts             `json:"facet_counts"`
-	Grouped     map[string]*GroupField   `json:"grouped"`
+	Grouped     *Grouped                 `json:"grouped"`
 }
 
 // ResponseHeader is populated on every response from the solr server
@@ -175,6 +175,56 @@ type Stats struct {
 	Fields map[string]interface{} `json:"stats_fields"`
 }
 
+// Grouped contains the groups that are returned when result grouping is on.
+// Solr is sending a different type of response under the same attribute
+// depending on whether the groups where created by a field or query 0r
+// func. Therefore the Grouped stuct separates them to facilitate
+// unmarshaling and ease of use.
+type Grouped struct {
+	ByField       map[string]*GroupField
+	ByQueryOrFunc map[string]*Group
+}
+
+// UnmarshalJSON implements the unmarshaler interface.
+func (g *Grouped) UnmarshalJSON(b []byte) error {
+	g.ByField = make(map[string]*GroupField)
+	g.ByQueryOrFunc = make(map[string]*Group)
+
+	var m map[string]interface{}
+	err := json.Unmarshal(b, &m)
+	if err != nil {
+		return err
+	}
+
+	for key, val := range m {
+		valBytes, err := interfaceToBytes(val)
+		if err != nil {
+			return err
+		}
+		tempMap, ok := val.(map[string]interface{})
+		if ok {
+			_, ok := tempMap["groups"]
+			if ok {
+				var gf GroupField
+				err = json.Unmarshal(valBytes, &gf)
+				if err != nil {
+					return err
+				}
+				g.ByField[key] = &gf
+			} else {
+				var gq Group
+				err = json.Unmarshal(valBytes, &gq)
+				if err != nil {
+					return err
+				}
+				g.ByQueryOrFunc[key] = &gq
+			}
+		}
+	}
+
+	return nil
+}
+
 // GroupField is populated whenever the query to solr includes grouping.
 // The response contains the total matches (of docs), the number of
 // groups (if requested) and the groups.
@@ -188,5 +238,6 @@ type GroupField struct {
 // to the specific group.
 type Group struct {
 	Value   interface{}   `json:"groupValue"`
+	Matches int           `json:"matches"`
 	DocList *ResponseData `json:"doclist"`
 }
