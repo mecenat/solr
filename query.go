@@ -204,6 +204,12 @@ func (q *Query) SetQuery(value string) {
 	q.params.Set(OptionQ, value)
 }
 
+// DelQuery removes any Q parameters that have been added
+func (q *Query) DelQuery() {
+	q.params.Del(OptionQ)
+	q.q = []string{}
+}
+
 // SetOperationAND sets the operation for the Q parameter
 // to AND (only when using `AddQuery`)
 func (q *Query) SetOperationAND() {
