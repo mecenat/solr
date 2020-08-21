@@ -39,10 +39,6 @@ func NewPrimaryReplicaClient(ctx context.Context, pHost, pCore, rHost, rCore str
 	}
 	rBasePath := formatBasePath(rHost, rCore)
 	solrClient := &PRClient{primary: pConn, replica: rConn, PrimaryPath: pBasePath, ReplicaPath: rBasePath}
-	err := solrClient.Ping(ctx)
-	if err != nil {
-		return nil, err
-	}
 	return solrClient, nil
 }
 

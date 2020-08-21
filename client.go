@@ -25,12 +25,7 @@ func NewSingleClient(ctx context.Context, host, core string, client *http.Client
 		httpClient: client,
 	}
 	bp := formatBasePath(host, core)
-	solrClient := &SingleClient{conn: conn, BasePath: bp}
-	err := solrClient.Ping(ctx)
-	if err != nil {
-		return nil, err
-	}
-	return solrClient, nil
+	return &SingleClient{conn: conn, BasePath: bp}, nil
 }
 
 func (c *SingleClient) formatURL(path string, query string) string {
