@@ -26,6 +26,9 @@ type PRClient struct {
 // writing data, and the replica server for reading data. A ping is also sent to both servers
 // during initialization to verify that they are active and a connection can be made.
 func NewPrimaryReplicaClient(ctx context.Context, pHost, pCore, rHost, rCore string, pClient, rClient *http.Client) (Client, error) {
+	if pHost == "" || pCore == "" || rHost == "" || rCore == "" {
+		return nil, ErrInvalidConfig
+	}
 	pConn := &Connection{
 		Host:       pHost,
 		Core:       pCore,

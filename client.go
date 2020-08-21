@@ -19,6 +19,9 @@ type SingleClient struct {
 // host and core. A ping is also sent to the server to verify that it is
 // active and a connection can be made.
 func NewSingleClient(ctx context.Context, host, core string, client *http.Client) (Client, error) {
+	if host == "" || core == "" {
+		return nil, ErrInvalidConfig
+	}
 	conn := &Connection{
 		Host:       host,
 		Core:       core,

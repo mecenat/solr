@@ -8,9 +8,13 @@ package solr
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 )
+
+// ErrInvalidConfig is returned when the hostname or corename are empty
+var ErrInvalidConfig = errors.New("invalid configuration: no host or core provided")
 
 // Connection represents the connection to the solr server and
 // includes information about the address of the server and
