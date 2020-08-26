@@ -2,6 +2,9 @@ package solr
 
 import (
 	"encoding/json"
+	"errors"
+	"fmt"
+	"strings"
 	"time"
 )
 
@@ -20,6 +23,7 @@ type Response struct {
 	Expanded    map[string]*ResponseData `json:"expanded"`
 	FacetCounts *FacetCounts             `json:"facet_counts"`
 	Grouped     *Grouped                 `json:"grouped"`
+	Schema      *ResponseSchema          `json:"schema"`
 }
 
 // ResponseHeader is populated on every response from the solr server
@@ -71,12 +75,60 @@ func (m *MaxScore) UnmarshalJSON(b []byte) error {
 // server is erroneous. It contains the status code, a message
 // and some metadata about the error's class
 type ResponseError struct {
-	Code    int64    `json:"code"`
-	Message string   `json:"msg"`
-	Meta    []string `json:"metadata"`
+	Code    int64           `json:"code"`
+	Message string          `json:"msg"`
+	Meta    []string        `json:"metadata"`
+	Details []*ErrorDetails `json:"details"`
+}
+
+type ErrorDetails struct {
+	Messages    []string               `json:"errorMessages"`
+	Command     string                 `json:"command"`
+	CommandItem map[string]interface{} `json:"item"`
+}
+
+// TODO (KK): CHECKS!!!
+func (d *ErrorDetails) UnmarshalJSON(b []byte) error {
+	var temp map[string]interface{}
+	err := json.Unmarshal(b, &temp)
+	if err != nil {
+		return err
+	}
+
+	if len(temp) != 2 {
+		return errors.New("Unexpected Messages")
+	}
+
+	for k, v := range temp {
+		if k == "errorMessages" {
+			for _, vv := range v.([]interface{}) {
+				d.Messages = append(d.Messages, vv.(string))
+			}
+			continue
+		}
+		d.Command = k
+		d.CommandItem = v.(map[string]interface{})
+	}
+
+	return nil
+}
+
+func (d *ErrorDetails) String() string {
+	return fmt.Sprintf("%s: %s", d.Command, d.Messages)
+}
+
+func (d *ErrorDetails) MoreInfo() map[string]interface{} {
+	return d.CommandItem
 }
 
 func (r *ResponseError) Error() string {
+	if len(r.Details) > 0 {
+		var msgs []string
+		for _, detail := range r.Details {
+			msgs = append(msgs, detail.String())
+		}
+		return fmt.Sprintf("%s: {%s}", r.Message, strings.Join(msgs, ", "))
+	}
 	return r.Message
 }
 
@@ -240,4 +292,16 @@ type Group struct {
 	Value   interface{}   `json:"groupValue"`
 	Matches int           `json:"matches"`
 	DocList *ResponseData `json:"doclist"`
+}
+
+// ResponseSchema is populated when using the Schema API to retrive
+// schema information.
+type ResponseSchema struct {
+	Name          string          `json:"name"`
+	Version       float64         `json:"version"`
+	UniqueKey     string          `json:"uniqueKey"`
+	FieldTypes    []*FieldType    `json:"fieldTypes"`
+	Fields        []*Field        `json:"fields"`
+	CopyFields    []*CopyField    `json:"copyFields"`
+	DynamicFields []*DynamicField `json:"dynamicFields"`
 }
