@@ -23,8 +23,7 @@ type PRClient struct {
 
 // NewPrimaryReplicaClient returns two connections from the provided host and cores, one for the primary
 // server and another for the replica. By default it is assumed that the primary server is used for
-// writing data, and the replica server for reading data. A ping is also sent to both servers
-// during initialization to verify that they are active and a connection can be made.
+// writing data, and the replica server for reading data.
 func NewPrimaryReplicaClient(ctx context.Context, pHost, pCore, rHost, rCore string, pClient, rClient *http.Client) (Client, error) {
 	if pHost == "" || pCore == "" || rHost == "" || rCore == "" {
 		return nil, ErrInvalidConfig

@@ -16,8 +16,7 @@ type SingleClient struct {
 }
 
 // NewSingleClient returns a connection to the solr client provided by the given
-// host and core. A ping is also sent to the server to verify that it is
-// active and a connection can be made.
+// host and core.
 func NewSingleClient(ctx context.Context, host, core string, client *http.Client) (Client, error) {
 	if host == "" || core == "" {
 		return nil, ErrInvalidConfig

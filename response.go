@@ -2,7 +2,6 @@ package solr
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -81,46 +80,6 @@ type ResponseError struct {
 	Details []*ErrorDetails `json:"details"`
 }
 
-type ErrorDetails struct {
-	Messages    []string               `json:"errorMessages"`
-	Command     string                 `json:"command"`
-	CommandItem map[string]interface{} `json:"item"`
-}
-
-// TODO (KK): CHECKS!!!
-func (d *ErrorDetails) UnmarshalJSON(b []byte) error {
-	var temp map[string]interface{}
-	err := json.Unmarshal(b, &temp)
-	if err != nil {
-		return err
-	}
-
-	if len(temp) != 2 {
-		return errors.New("Unexpected Messages")
-	}
-
-	for k, v := range temp {
-		if k == "errorMessages" {
-			for _, vv := range v.([]interface{}) {
-				d.Messages = append(d.Messages, vv.(string))
-			}
-			continue
-		}
-		d.Command = k
-		d.CommandItem = v.(map[string]interface{})
-	}
-
-	return nil
-}
-
-func (d *ErrorDetails) String() string {
-	return fmt.Sprintf("%s: %s", d.Command, d.Messages)
-}
-
-func (d *ErrorDetails) MoreInfo() map[string]interface{} {
-	return d.CommandItem
-}
-
 func (r *ResponseError) Error() string {
 	if len(r.Details) > 0 {
 		var msgs []string
@@ -130,6 +89,59 @@ func (r *ResponseError) Error() string {
 		return fmt.Sprintf("%s: {%s}", r.Message, strings.Join(msgs, ", "))
 	}
 	return r.Message
+}
+
+// ErrorDetails provides detailed information on the errors
+// that might arise when multiple commands are sent in a
+// batch.
+type ErrorDetails struct {
+	Messages    []string               `json:"errorMessages"`
+	Command     string                 `json:"command"`
+	CommandItem map[string]interface{} `json:"item"`
+}
+
+// UnmarshalJSON implements the unmarshaler interface
+func (d *ErrorDetails) UnmarshalJSON(b []byte) error {
+	var temp map[string]interface{}
+	err := json.Unmarshal(b, &temp)
+	if err != nil {
+		return err
+	}
+
+	if len(temp) != 2 {
+		return nil
+	}
+
+	for key, val := range temp {
+		if key == "errorMessages" {
+			val, ok := val.([]interface{})
+			if ok {
+				for _, v := range val {
+					msg, ok := v.(string)
+					if ok {
+						d.Messages = append(d.Messages, msg)
+					}
+				}
+			}
+			continue
+		}
+		d.Command = key
+		item, ok := val.(map[string]interface{})
+		if ok {
+			d.CommandItem = item
+		}
+	}
+
+	return nil
+}
+
+func (d *ErrorDetails) String() string {
+	return fmt.Sprintf("%s: %s", d.Command, d.Messages)
+}
+
+// Item returns the item causing the error
+func (d *ErrorDetails) Item() map[string]interface{} {
+	return d.CommandItem
 }
 
 // Docs represents an array of doc

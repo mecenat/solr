@@ -38,7 +38,9 @@ func main() {
 	}
 	fmt.Println(typesThatEnableIndexing)
 
-	// Create a custom field type with one analyzer
+	// field types examples
+
+	// create a custom field type with one analyzer
 	singleAnalyzerFilterType := &solr.FieldType{
 		Name:                 "custom",
 		CLass:                "solr.TextField",
@@ -61,7 +63,7 @@ func main() {
 		// actual entity that caused the error
 		if len(res.Error.Details) > 0 {
 			for _, d := range res.Error.Details {
-				fmt.Println(d.MoreInfo())
+				fmt.Println(d.Item())
 			}
 		}
 		// without checking we just get the errors and the command that caused them
@@ -70,7 +72,7 @@ func main() {
 	fmt.Println(res.Header)
 
 	// Retrieve the field type that we just created
-	ft, err := sa.GetFieldType(ctx, "custom")
+	ft, err := sa.RetrieveFieldType(ctx, "custom")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -101,7 +103,7 @@ func main() {
 	fmt.Println(res.Header)
 
 	// Retrieve the field type that we just created
-	ft, err = sa.GetFieldType(ctx, "custom")
+	ft, err = sa.RetrieveFieldType(ctx, "custom")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -153,7 +155,7 @@ func main() {
 	if err != nil {
 		if len(res.Error.Details) > 0 {
 			for _, d := range res.Error.Details {
-				fmt.Println(d.MoreInfo())
+				fmt.Println(d.Item())
 			}
 		}
 		log.Fatal(err)
@@ -166,6 +168,123 @@ func main() {
 	}
 	fmt.Println(res.Header)
 
+	// field examples
+
+	// create a field
+	fl := &solr.Field{
+		Name: "sell_by",
+		Type: "pdate",
+		FieldDefaultProperties: solr.FieldDefaultProperties{
+			Stored: newTrue(),
+		},
+	}
+
+	res, err = sa.AddField(ctx, fl)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println(res.Header)
+
+	// replace a field
+	flV2 := &solr.Field{
+		Name: "sell_by",
+		Type: "pdate",
+		FieldDefaultProperties: solr.FieldDefaultProperties{
+			Stored: newFalse(),
+		},
+	}
+
+	res, err = sa.ReplaceField(ctx, flV2)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println(res.Header)
+
+	// retrieve a field
+	field, err := sa.RetrieveField(ctx, "sell_by")
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println(field.Name, readBoolPointer(field.Stored))
+
+	// delete a field
+	res, err = sa.DeleteField(ctx, "sell_by")
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println(res.Header)
+
+	// dynamic field examples
+
+	// create a dynamic field
+	df := &solr.DynamicField{
+		Name: "*_st",
+		Type: "string",
+		FieldDefaultProperties: solr.FieldDefaultProperties{
+			Stored: newTrue(),
+		},
+	}
+	res, err = sa.AddDynamicField(ctx, df)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println(res.Header)
+
+	// replace a dynamic field
+	dfV2 := &solr.DynamicField{
+		Name: "*_st",
+		Type: "text_general",
+		FieldDefaultProperties: solr.FieldDefaultProperties{
+			Stored: newFalse(),
+		},
+	}
+
+	res, err = sa.ReplaceDynamicField(ctx, dfV2)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println(res.Header)
+
+	// retrieve a dynamic field
+	copyField, err := sa.RetrieveDynamicField(ctx, "*_st")
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println(copyField.Name, readBoolPointer(copyField.Stored))
+
+	// delete a dynamic field
+	res, err = sa.DeleteDynamicField(ctx, "*_st")
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println(res.Header)
+
+	// copy field examples
+
+	// create a copy field
+	cf := &solr.CopyField{
+		Source: "*_s",
+		Dest:   "_text_",
+	}
+	res, err = sa.AddCopyField(ctx, cf)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println(res.Header)
+
+	// retrieve a copy field
+	cField, err := sa.RetrieveCopyField(ctx, "*_s", "_text_")
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println(cField.Source, cField.Dest)
+
+	// delete a copy field
+	res, err = sa.DeleteCopyField(ctx, "*_s", "_text_")
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println(res.Header)
 }
 
 // Helper functions for *bool handling
