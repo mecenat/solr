@@ -8,29 +8,18 @@ package solr
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
 )
 
-// ErrInvalidConfig is returned when the hostname or corename are empty
-var ErrInvalidConfig = errors.New("invalid configuration: no host or core provided")
-
-// Connection represents the connection to the solr server and
-// includes information about the address of the server and
-// and the client to be used for connecting to it.
-type Connection struct {
-	httpClient *http.Client
-	Host       string
-	Core       string
-}
-
 // Client is the interface encompasing all the solr service methods
 type Client interface {
+	// SetAuth sets the authentication credentials if needed.
+	SetAuth(username, password string)
 
 	// Ping checks the connectivity of the solr server. It usually just returns with
 	// Status = OK and a default response header, therefore this function just
-	// returns an error in case there is no response, or an unexpected one
+	// returns an error in case there is no response, or an unexpected one.
 	Ping(ctx context.Context) error
 
 	// Search performs a query to the solr server by using the `/select` endpoint, with the provided query
@@ -112,11 +101,11 @@ type Client interface {
 	CustomUpdate(ctx context.Context, item *UpdateBuilder) (*Response, error)
 }
 
-func read(ctx context.Context, client *http.Client, url string) (*Response, error) {
-	return request(ctx, client, http.MethodGet, url, nil)
+func read(ctx context.Context, conn *Connection, url string) (*Response, error) {
+	return conn.request(ctx, http.MethodGet, url, nil)
 }
 
-func create(ctx context.Context, client *http.Client, url string, item interface{}) (*Response, error) {
+func create(ctx context.Context, conn *Connection, url string, item interface{}) (*Response, error) {
 	bodyBytes, err := interfaceToBytes(item)
 	if err != nil {
 		return nil, err
@@ -127,10 +116,10 @@ func create(ctx context.Context, client *http.Client, url string, item interface
 		return nil, fmt.Errorf("Invalid JSON provided: %s", err)
 	}
 
-	return request(ctx, client, http.MethodPost, url, bodyBytes)
+	return conn.request(ctx, http.MethodPost, url, bodyBytes)
 }
 
-func batchCreate(ctx context.Context, client *http.Client, url string, items interface{}) (*Response, error) {
+func batchCreate(ctx context.Context, conn *Connection, url string, items interface{}) (*Response, error) {
 	bodyBytes, err := interfaceToBytes(items)
 	if err != nil {
 		return nil, err
@@ -141,10 +130,10 @@ func batchCreate(ctx context.Context, client *http.Client, url string, items int
 		return nil, fmt.Errorf("Invalid Array of JSON provided: %s", err)
 	}
 
-	return request(ctx, client, http.MethodPost, url, bodyBytes)
+	return conn.request(ctx, http.MethodPost, url, bodyBytes)
 }
 
-func update(ctx context.Context, client *http.Client, url string, item *UpdatedFields) (*Response, error) {
+func update(ctx context.Context, conn *Connection, url string, item *UpdatedFields) (*Response, error) {
 	ub := NewUpdateBuilder()
 	ub.Add(item.fields)
 
@@ -153,10 +142,10 @@ func update(ctx context.Context, client *http.Client, url string, item *UpdatedF
 		return nil, err
 	}
 
-	return request(ctx, client, http.MethodPost, url, bodyBytes)
+	return conn.request(ctx, http.MethodPost, url, bodyBytes)
 }
 
-func delete(ctx context.Context, client *http.Client, url string, doc Doc) (*Response, error) {
+func delete(ctx context.Context, conn *Connection, url string, doc Doc) (*Response, error) {
 	ub := NewUpdateBuilder()
 	ub.Delete(doc)
 
@@ -165,10 +154,10 @@ func delete(ctx context.Context, client *http.Client, url string, doc Doc) (*Res
 		return nil, err
 	}
 
-	return request(ctx, client, http.MethodPost, url, bodyBytes)
+	return conn.request(ctx, http.MethodPost, url, bodyBytes)
 }
 
-func commit(ctx context.Context, client *http.Client, url string, opts *CommitOptions) (*Response, error) {
+func commit(ctx context.Context, conn *Connection, url string, opts *CommitOptions) (*Response, error) {
 	ub := NewUpdateBuilder()
 	ub.Commit(opts)
 
@@ -177,10 +166,10 @@ func commit(ctx context.Context, client *http.Client, url string, opts *CommitOp
 		return nil, err
 	}
 
-	return request(ctx, client, http.MethodPost, url, bodyBytes)
+	return conn.request(ctx, http.MethodPost, url, bodyBytes)
 }
 
-func optimize(ctx context.Context, client *http.Client, url string, opts *OptimizeOptions) (*Response, error) {
+func optimize(ctx context.Context, conn *Connection, url string, opts *OptimizeOptions) (*Response, error) {
 	ub := NewUpdateBuilder()
 	ub.Optimize(opts)
 
@@ -189,10 +178,10 @@ func optimize(ctx context.Context, client *http.Client, url string, opts *Optimi
 		return nil, err
 	}
 
-	return request(ctx, client, http.MethodPost, url, bodyBytes)
+	return conn.request(ctx, http.MethodPost, url, bodyBytes)
 }
 
-func rollback(ctx context.Context, client *http.Client, url string) (*Response, error) {
+func rollback(ctx context.Context, conn *Connection, url string) (*Response, error) {
 	ub := NewUpdateBuilder()
 	ub.Rollback()
 
@@ -201,14 +190,14 @@ func rollback(ctx context.Context, client *http.Client, url string) (*Response, 
 		return nil, err
 	}
 
-	return request(ctx, client, http.MethodPost, url, bodyBytes)
+	return conn.request(ctx, http.MethodPost, url, bodyBytes)
 }
 
-func customUpdate(ctx context.Context, client *http.Client, url string, item *UpdateBuilder) (*Response, error) {
+func customUpdate(ctx context.Context, conn *Connection, url string, item *UpdateBuilder) (*Response, error) {
 	bodyBytes, err := interfaceToBytes(item.commands)
 	if err != nil {
 		return nil, err
 	}
 
-	return request(ctx, client, http.MethodPost, url, bodyBytes)
+	return conn.request(ctx, http.MethodPost, url, bodyBytes)
 }

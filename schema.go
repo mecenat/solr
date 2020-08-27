@@ -104,7 +104,7 @@ type CopyField struct {
 type DynamicField Field
 
 // SchemaCommand is used to restrict the available update commands that can
-// be included in the body of a request to the `/update` endpoint.
+// be included in the body of a s.conn.request to the `/update` endpoint.
 type SchemaCommand string
 
 func (c SchemaCommand) String() string {
@@ -158,14 +158,14 @@ func (s *SchemaAPI) post(ctx context.Context, body interface{}) (*Response, erro
 	if err != nil {
 		return nil, err
 	}
-	return request(ctx, s.conn.httpClient, http.MethodPost, s.Path, bodyBytes)
+	return s.conn.request(ctx, http.MethodPost, s.Path, bodyBytes)
 }
 
 // RetrieveSchema allows you to read how your schema has been defined. The output will
 // include all fields, field types, dynamic rules and copy field rules in json.
 // The schema name and version are also included.
 func (s *SchemaAPI) RetrieveSchema(ctx context.Context) (*Response, error) {
-	return request(ctx, s.conn.httpClient, http.MethodGet, s.Path, nil)
+	return s.conn.request(ctx, http.MethodGet, s.Path, nil)
 }
 
 // AddFieldType adds a new field type to the schema. For more info:

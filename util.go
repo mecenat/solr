@@ -4,10 +4,57 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
 )
+
+// ErrInvalidConfig is returned when the hostname or corename are empty
+var ErrInvalidConfig = errors.New("invalid configuration: no host or core provided")
+
+// Connection represents the connection to the solr server and
+// includes information about the address of the server and
+// and the client to be used for connecting to it.
+type Connection struct {
+	httpClient *http.Client
+	Host       string
+	Core       string
+	Username   string
+	Password   string
+}
+
+func (c *Connection) request(ctx context.Context, method, url string, body []byte) (*Response, error) {
+	req, err := http.NewRequest(method, url, bytes.NewBuffer(body))
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", "application/json")
+
+	if c.Username != "" && c.Password != "" {
+		req.SetBasicAuth(c.Username, c.Password)
+	}
+
+	res, err := c.httpClient.Do(req.WithContext(ctx))
+	if err != nil {
+		return nil, err
+	}
+
+	var r Response
+	defer res.Body.Close()
+
+	err = json.NewDecoder(res.Body).Decode(&r)
+	if err != nil {
+		return nil, err
+	}
+
+	if r.Error != nil {
+		return &r, r.Error
+	}
+
+	return &r, nil
+}
 
 func formatBasePath(host, core string) string {
 	if strings.HasSuffix(host, "/solr") {
@@ -44,31 +91,4 @@ func interfaceToBytes(a interface{}) ([]byte, error) {
 		return nil, err
 	}
 	return b, err
-}
-
-func request(ctx context.Context, client *http.Client, method, url string, body []byte) (*Response, error) {
-	req, err := http.NewRequest(method, url, bytes.NewBuffer(body))
-	if err != nil {
-		return nil, err
-	}
-
-	req.Header.Add("Content-Type", "application/json")
-	res, err := client.Do(req.WithContext(ctx))
-	if err != nil {
-		return nil, err
-	}
-
-	var r Response
-	defer res.Body.Close()
-
-	err = json.NewDecoder(res.Body).Decode(&r)
-	if err != nil {
-		return nil, err
-	}
-
-	if r.Error != nil {
-		return &r, r.Error
-	}
-
-	return &r, nil
 }
