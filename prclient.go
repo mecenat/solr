@@ -43,8 +43,8 @@ func NewPrimaryReplicaClient(ctx context.Context, pHost, pCore, rHost, rCore str
 	return solrClient, nil
 }
 
-// SetAuth sets auth credentials if needed.
-func (c *PRClient) SetAuth(username, password string) {
+// SetBasicAuth sets auth credentials if needed.
+func (c *PRClient) SetBasicAuth(username, password string) {
 	c.primary.Username = username
 	c.replica.Username = username
 	c.primary.Password = password

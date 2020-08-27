@@ -14,8 +14,8 @@ import (
 
 // Client is the interface encompasing all the solr service methods
 type Client interface {
-	// SetAuth sets the authentication credentials if needed.
-	SetAuth(username, password string)
+	// SetBasicAuth sets the authentication credentials if needed.
+	SetBasicAuth(username, password string)
 
 	// Ping checks the connectivity of the solr server. It usually just returns with
 	// Status = OK and a default response header, therefore this function just

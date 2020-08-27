@@ -30,8 +30,8 @@ func NewSingleClient(ctx context.Context, host, core string, client *http.Client
 	return &SingleClient{conn: conn, BasePath: bp}, nil
 }
 
-// SetAuth sets auth credentials if needed.
-func (c *SingleClient) SetAuth(username, password string) {
+// SetBasicAuth sets auth credentials if needed.
+func (c *SingleClient) SetBasicAuth(username, password string) {
 	c.conn.Username = username
 	c.conn.Password = password
 }
