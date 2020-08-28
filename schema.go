@@ -153,6 +153,12 @@ func NewSchemaAPI(ctx context.Context, host, core string, client *http.Client) (
 	return &SchemaAPI{conn: conn, Path: path}, nil
 }
 
+// SetBasicAuth sets the authentication credentials if needed.
+func (s *SchemaAPI) SetBasicAuth(username, password string) {
+	s.conn.Username = username
+	s.conn.Password = password
+}
+
 func (s *SchemaAPI) post(ctx context.Context, body interface{}) (*Response, error) {
 	bodyBytes, err := interfaceToBytes(body)
 	if err != nil {
