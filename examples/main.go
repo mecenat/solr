@@ -9,11 +9,28 @@ import (
 	"github.com/mecenat/solr"
 )
 
-// Running this file will also create the necessary schema
-// using the schema API
+// Running this file will create the core and also create the necessary schema
 
 func main() {
 	ctx := context.Background()
+
+	// Initialize a new solr Core Admin API
+	ca, err := solr.NewCoreAdmin(ctx, "http://localhost:8983", http.DefaultClient)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// create the core
+	cres, err := ca.Create(ctx, "films", &solr.CoreCreateOpts{
+		InstanceDir: "/var/solr/data/films",
+		DataDir:     "data",
+		Config:      "conf/solrconfig.xml",
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println(cres.Header)
+
 	// Initialize a new solr schema API
 	sa, err := solr.NewSchemaAPI(ctx, "http://localhost:8983", "films", http.DefaultClient)
 	if err != nil {
