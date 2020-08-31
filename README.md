@@ -3,6 +3,8 @@ A Solr client written in Go
 
 Designed for Solr 8.5 (Should support earlier versions as well)
 
+Provides clients for Solr's Request API, Schema API & Core Admin API 
+
 Currently supports only JSON and basic CRUDL actions.
 
 
@@ -36,9 +38,37 @@ import "github.com/mecenat/solr"
 
 func main() {
 	ctx := context.Background()
-	slr, err := solr.NewPrimaryReplicaClient(ctx, "primaryHost", "primaryCore", "replicaHost", "replicaCore", primaryClient, replicatClient)
+	slr, err := solr.NewPrimaryReplicaClient(ctx, "primaryHost", "replicaHost", "core", primaryClient, replicatClient)
 	if err != nil {
 	      ...
+	}
+```
+
+To access Solr's Core Admin API you need to create a separate client as follows:
+```
+package main
+
+import "github.com/mecenat/solr"
+
+func main() {
+	ctx := context.Background()
+	ca, err := NewCoreAdmin(ctx, "host", http.DefaultClient)
+	if err != nil {
+				...
+	}
+```
+
+To access Solr's Schema API you also need a separate client as follows:
+```
+package main
+
+import "github.com/mecenat/solr"
+
+func main() {
+	ctx := context.Background()
+	sa, err := NewSchemaAPI(ctx, "host", "core", http.DefaultClient)
+	if err != nil {
+				...
 	}
 ```
 

@@ -141,6 +141,12 @@ func NewCoreAdmin(ctx context.Context, host string, client *http.Client) (*CoreA
 	if host == "" {
 		return nil, ErrInvalidConfig
 	}
+
+	_, err := url.ParseRequestURI(host)
+	if err != nil {
+		return nil, err
+	}
+
 	conn := &Connection{
 		Host:       host,
 		Core:       "",

@@ -23,22 +23,33 @@ type PRClient struct {
 // NewPrimaryReplicaClient returns two connections from the provided host and cores, one for the primary
 // server and another for the replica. By default it is assumed that the primary server is used for
 // writing data, and the replica server for reading data.
-func NewPrimaryReplicaClient(ctx context.Context, pHost, pCore, rHost, rCore string, pClient, rClient *http.Client) (Client, error) {
-	if pHost == "" || pCore == "" || rHost == "" || rCore == "" {
+func NewPrimaryReplicaClient(ctx context.Context, pHost, rHost, core string, pClient, rClient *http.Client) (Client, error) {
+	if pHost == "" || rHost == "" || core == "" {
 		return nil, ErrInvalidConfig
 	}
+
+	_, err := url.ParseRequestURI(pHost)
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = url.ParseRequestURI(rHost)
+	if err != nil {
+		return nil, err
+	}
+
 	pConn := &Connection{
 		Host:       pHost,
-		Core:       pCore,
+		Core:       core,
 		httpClient: pClient,
 	}
-	pBasePath := formatBasePath(pHost, pCore)
+	pBasePath := formatBasePath(pHost, core)
 	rConn := &Connection{
 		Host:       rHost,
-		Core:       rCore,
+		Core:       core,
 		httpClient: rClient,
 	}
-	rBasePath := formatBasePath(rHost, rCore)
+	rBasePath := formatBasePath(rHost, core)
 	solrClient := &PRClient{primary: pConn, replica: rConn, PrimaryPath: pBasePath, ReplicaPath: rBasePath}
 	return solrClient, nil
 }

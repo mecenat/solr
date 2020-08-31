@@ -21,6 +21,12 @@ func NewSingleClient(ctx context.Context, host, core string, client *http.Client
 	if host == "" || core == "" {
 		return nil, ErrInvalidConfig
 	}
+
+	_, err := url.ParseRequestURI(host)
+	if err != nil {
+		return nil, err
+	}
+
 	conn := &Connection{
 		Host:       host,
 		Core:       core,
