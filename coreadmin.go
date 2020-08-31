@@ -53,6 +53,8 @@ var (
 	ErrMoreParamsRange = errors.New("only one of range, split.key may be defined")
 )
 
+// CoreCreateOpts are the optional properties that can
+// be provided when creating a new core.
 type CoreCreateOpts struct {
 	InstanceDir string
 	Config      string
@@ -64,6 +66,8 @@ type CoreCreateOpts struct {
 	AsyncID     string
 }
 
+// CoreUnloadOpts are the optional properties that can
+// be provided when unloading a core.
 type CoreUnloadOpts struct {
 	DeleteIndex       bool
 	DeleteDataDir     bool
@@ -71,6 +75,10 @@ type CoreUnloadOpts struct {
 	AsyncID           string
 }
 
+// CoreSplitOpts are the optional properties that can be
+// provided when splitting a core. Path & TargetCore
+// may not have a value simultaneously, the same
+// goes for Ranges & SplitKey.
 type CoreSplitOpts struct {
 	Path       []string
 	TargetCore []string
@@ -79,12 +87,19 @@ type CoreSplitOpts struct {
 	AsyncID    string
 }
 
+// CoreMergeOpts are the optional properties that can be
+// provided when merging a core.
 type CoreMergeOpts struct {
 	IndexDir []string
 	SrcCore  []string
 	AsyncID  string
 }
 
+// CoreAdminResponse represents the response from the solr core admin API. It usually
+// contains Header information, the response data or an error in case of erroneous
+// response. Also it can contain the core's or a request's status, failures
+// that might have happened during the initiation procedure as well as
+// core information.
 type CoreAdminResponse struct {
 	Header       *ResponseHeader                `json:"responseHeader"`
 	Error        *ResponseError                 `json:"error"`
@@ -95,6 +110,7 @@ type CoreAdminResponse struct {
 	Core         string                         `json:"core"`
 }
 
+// CoreStatusResponse contains information about a core and its status.
 type CoreStatusResponse struct {
 	Name        string        `json:"name"`
 	InstanceDir string        `json:"instanceDir"`
@@ -106,6 +122,7 @@ type CoreStatusResponse struct {
 	Index       *IndexData    `json:"index"`
 }
 
+// IndexData contains information about a core's index.
 type IndexData struct {
 	NumDocs                 int64     `json:"numDocs"`
 	MaxDoc                  int64     `json:"maxDoc"`
@@ -124,6 +141,7 @@ type IndexData struct {
 	Size                    string    `json:"size"`
 }
 
+// UserData contains information about commits.
 type UserData struct {
 	CommitCommandVersion string `json:"commitCommandVer"`
 	CommitTimeMSec       string `json:"commitTimeMSec"`
