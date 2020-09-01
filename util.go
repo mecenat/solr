@@ -92,3 +92,8 @@ func interfaceToBytes(a interface{}) ([]byte, error) {
 	}
 	return b, err
 }
+
+// BoostField is a helper function to properly format field boosting
+func BoostField(field string, boost float64) string {
+	return fmt.Sprintf("%s^%f", field, boost)
+}

@@ -422,11 +422,6 @@ func (q *Query) SetQueryFields(fields []string) {
 	q.params.Set(OptionQueryFields, fieldsStr)
 }
 
-// BoostField is a helper function to properly format field boosting
-func BoostField(field string, boost float64) string {
-	return fmt.Sprintf("%s^%f", field, boost)
-}
-
 // SetMinimumShouldMatch sets the minimum params to match (DisMax & eDisMax only)
 // More info:
 // https://lucene.apache.org/solr/guide/8_5/the-dismax-query-parser.html#mm-minimum-should-match-parameter
@@ -572,7 +567,7 @@ func (q *Query) Group(params *GroupParams) error {
 		}
 	}
 	if len(params.Func) > 0 {
-		for _, i := range params.Query {
+		for _, i := range params.Func {
 			q.params.Add(OptionGroupFunc, i)
 		}
 	}
