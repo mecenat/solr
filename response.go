@@ -2,8 +2,6 @@ package solr
 
 import (
 	"encoding/json"
-	"fmt"
-	"strings"
 	"time"
 )
 
@@ -68,80 +66,6 @@ func (m *MaxScore) UnmarshalJSON(b []byte) error {
 		m.Valid = false
 	}
 	return nil
-}
-
-// ResponseError is populated in the event the response from the solr
-// server is erroneous. It contains the status code, a message
-// and some metadata about the error's class
-type ResponseError struct {
-	Code    int64           `json:"code"`
-	Message string          `json:"msg"`
-	Meta    []string        `json:"metadata"`
-	Details []*ErrorDetails `json:"details"`
-}
-
-func (r *ResponseError) Error() string {
-	if len(r.Details) > 0 {
-		var msgs []string
-		for _, detail := range r.Details {
-			msgs = append(msgs, detail.String())
-		}
-		return fmt.Sprintf("%s: {%s}", r.Message, strings.Join(msgs, ", "))
-	}
-	return r.Message
-}
-
-// ErrorDetails provides detailed information on the errors
-// that might arise when multiple commands are sent in a
-// batch.
-type ErrorDetails struct {
-	Messages    []string               `json:"errorMessages"`
-	Command     string                 `json:"command"`
-	CommandItem map[string]interface{} `json:"item"`
-}
-
-// UnmarshalJSON implements the unmarshaler interface
-func (d *ErrorDetails) UnmarshalJSON(b []byte) error {
-	var temp map[string]interface{}
-	err := json.Unmarshal(b, &temp)
-	if err != nil {
-		return err
-	}
-
-	if len(temp) != 2 {
-		return nil
-	}
-
-	for key, val := range temp {
-		if key == "errorMessages" {
-			val, ok := val.([]interface{})
-			if ok {
-				for _, v := range val {
-					msg, ok := v.(string)
-					if ok {
-						d.Messages = append(d.Messages, msg)
-					}
-				}
-			}
-			continue
-		}
-		d.Command = key
-		item, ok := val.(map[string]interface{})
-		if ok {
-			d.CommandItem = item
-		}
-	}
-
-	return nil
-}
-
-func (d *ErrorDetails) String() string {
-	return fmt.Sprintf("%s: %s", d.Command, d.Messages)
-}
-
-// Item returns the item causing the error
-func (d *ErrorDetails) Item() map[string]interface{} {
-	return d.CommandItem
 }
 
 // Docs represents an array of doc
