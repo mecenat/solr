@@ -21,6 +21,67 @@ type ManagedResponse struct {
 	Error     *ResponseError     `json:"error"`
 	Resources []*ManagedResource `json:"managedResources"`
 	Synonyms  *SynonymMappings   `json:"synonymMappings"`
+	RawMap    map[string]interface{}
+}
+
+// UnmarshalJSON implements the unmarshaler interface
+func (r *ManagedResponse) UnmarshalJSON(b []byte) error {
+	var m map[string]interface{}
+	err := json.Unmarshal(b, &m)
+	if err != nil {
+		return err
+	}
+	r.RawMap = m
+
+	var h ResponseHeader
+	err = json.Unmarshal(b, &h)
+	if err != nil {
+		return err
+	}
+	r.Header = &h
+
+	_, ok := m["error"]
+	if ok {
+		var e ResponseError
+		err = json.Unmarshal(b, &e)
+		if err != nil {
+			return err
+		}
+		r.Error = &e
+	}
+
+	resInfArr, ok := m["managedResources"]
+	if ok {
+		var resourceMap []*ManagedResource
+		resArr, ok := resInfArr.([]interface{})
+		if ok {
+			for _, resInf := range resArr {
+				var resource ManagedResource
+				resBytes, err := interfaceToBytes(resInf)
+				if err != nil {
+					return err
+				}
+				err = json.Unmarshal(resBytes, &resource)
+				if err != nil {
+					return err
+				}
+				resourceMap = append(resourceMap, &resource)
+			}
+		}
+		r.Resources = resourceMap
+	}
+
+	_, ok = m["synonymMappings"]
+	if ok {
+		var syn SynonymMappings
+		err = json.Unmarshal(b, &syn)
+		if err != nil {
+			return err
+		}
+		r.Synonyms = &syn
+	}
+
+	return nil
 }
 
 // ManagedResource represents a managed resource in solr.
