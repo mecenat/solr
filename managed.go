@@ -33,17 +33,28 @@ func (r *ManagedResponse) UnmarshalJSON(b []byte) error {
 	}
 	r.RawMap = m
 
-	var h ResponseHeader
-	err = json.Unmarshal(b, &h)
-	if err != nil {
-		return err
-	}
-	r.Header = &h
-
-	_, ok := m["error"]
+	headInf, ok := m["responseHeader"]
 	if ok {
+		headBytes, err := interfaceToBytes(headInf)
+		if err != nil {
+			return err
+		}
+		var h ResponseHeader
+		err = json.Unmarshal(headBytes, &h)
+		if err != nil {
+			return err
+		}
+		r.Header = &h
+	}
+
+	errInf, ok := m["error"]
+	if ok {
+		errBytes, err := interfaceToBytes(errInf)
+		if err != nil {
+			return err
+		}
 		var e ResponseError
-		err = json.Unmarshal(b, &e)
+		err = json.Unmarshal(errBytes, &e)
 		if err != nil {
 			return err
 		}
@@ -71,10 +82,14 @@ func (r *ManagedResponse) UnmarshalJSON(b []byte) error {
 		r.Resources = resourceMap
 	}
 
-	_, ok = m["synonymMappings"]
+	synInf, ok := m["synonymMappings"]
 	if ok {
+		synBytes, err := interfaceToBytes(synInf)
+		if err != nil {
+			return err
+		}
 		var syn SynonymMappings
-		err = json.Unmarshal(b, &syn)
+		err = json.Unmarshal(synBytes, &syn)
 		if err != nil {
 			return err
 		}
