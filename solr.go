@@ -98,7 +98,7 @@ type Client interface {
 
 	// CustomUpdate allows the creation of a request to the `/update` endpoint that can include more than one update
 	// command or for those that want a more finegrained request.
-	CustomUpdate(ctx context.Context, item *UpdateBuilder) (*Response, error)
+	CustomUpdate(ctx context.Context, item *UpdateBuilder, opts *WriteOptions) (*Response, error)
 }
 
 func read(ctx context.Context, conn *Connection, url string) (*Response, error) {
@@ -135,7 +135,7 @@ func batchCreate(ctx context.Context, conn *Connection, url string, items interf
 
 func update(ctx context.Context, conn *Connection, url string, item *UpdatedFields) (*Response, error) {
 	ub := NewUpdateBuilder()
-	ub.Add(item.fields)
+	ub.add(item.fields)
 
 	bodyBytes, err := interfaceToBytes(ub.commands)
 	if err != nil {
@@ -147,7 +147,7 @@ func update(ctx context.Context, conn *Connection, url string, item *UpdatedFiel
 
 func delete(ctx context.Context, conn *Connection, url string, doc Doc) (*Response, error) {
 	ub := NewUpdateBuilder()
-	ub.Delete(doc)
+	ub.delete(doc)
 
 	bodyBytes, err := interfaceToBytes(ub.commands)
 	if err != nil {
@@ -159,7 +159,7 @@ func delete(ctx context.Context, conn *Connection, url string, doc Doc) (*Respon
 
 func commit(ctx context.Context, conn *Connection, url string, opts *CommitOptions) (*Response, error) {
 	ub := NewUpdateBuilder()
-	ub.Commit(opts)
+	ub.commit(opts)
 
 	bodyBytes, err := interfaceToBytes(ub.commands)
 	if err != nil {
@@ -171,7 +171,7 @@ func commit(ctx context.Context, conn *Connection, url string, opts *CommitOptio
 
 func optimize(ctx context.Context, conn *Connection, url string, opts *OptimizeOptions) (*Response, error) {
 	ub := NewUpdateBuilder()
-	ub.Optimize(opts)
+	ub.optimize(opts)
 
 	bodyBytes, err := interfaceToBytes(ub.commands)
 	if err != nil {
@@ -183,7 +183,7 @@ func optimize(ctx context.Context, conn *Connection, url string, opts *OptimizeO
 
 func rollback(ctx context.Context, conn *Connection, url string) (*Response, error) {
 	ub := NewUpdateBuilder()
-	ub.Rollback()
+	ub.rollback()
 
 	bodyBytes, err := interfaceToBytes(ub.commands)
 	if err != nil {
@@ -194,6 +194,8 @@ func rollback(ctx context.Context, conn *Connection, url string) (*Response, err
 }
 
 func customUpdate(ctx context.Context, conn *Connection, url string, item *UpdateBuilder) (*Response, error) {
+	item.prepare()
+
 	bodyBytes, err := interfaceToBytes(item.commands)
 	if err != nil {
 		return nil, err

@@ -14,7 +14,8 @@ func TestNewUpdateBuilder(t *testing.T) {
 func TestUpdateBuilderAdd(t *testing.T) {
 	u := NewUpdateBuilder()
 	input := map[string]interface{}{"test": "test"}
-	u.Add(input)
+	u.add(input)
+	u.prepare()
 	_, ok := u.commands[CommandAdd]
 	if !ok {
 		t.Fatal("add command not found!")
@@ -23,7 +24,7 @@ func TestUpdateBuilderAdd(t *testing.T) {
 
 func TestUpdateBuilderCommit(t *testing.T) {
 	u := NewUpdateBuilder()
-	u.Commit(nil)
+	u.commit(nil)
 	_, ok := u.commands[CommandCommit]
 	if !ok {
 		t.Fatal("commit command not found!")
@@ -32,7 +33,7 @@ func TestUpdateBuilderCommit(t *testing.T) {
 
 func TestUpdateBuilderOptimize(t *testing.T) {
 	u := NewUpdateBuilder()
-	u.Optimize(nil)
+	u.optimize(nil)
 	_, ok := u.commands[CommandOptimize]
 	if !ok {
 		t.Fatal("optimize command not found!")
@@ -41,7 +42,7 @@ func TestUpdateBuilderOptimize(t *testing.T) {
 
 func TestUpdateBuilderRollback(t *testing.T) {
 	u := NewUpdateBuilder()
-	u.Rollback()
+	u.rollback()
 	_, ok := u.commands[CommandRollback]
 	if !ok {
 		t.Fatal("rollback command not found!")
@@ -50,8 +51,8 @@ func TestUpdateBuilderRollback(t *testing.T) {
 
 func TestUpdateBuilderDelete(t *testing.T) {
 	u := NewUpdateBuilder()
-	input := map[string]interface{}{"test": "test"}
-	u.Delete(input)
+	u.DeleteByQuery("test")
+	u.prepare()
 	_, ok := u.commands[CommandDelete]
 	if !ok {
 		t.Fatal("delete command not found!")

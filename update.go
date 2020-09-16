@@ -39,47 +39,71 @@ func (c Command) String() string {
 // UpdateBuilder is a helper struct that provides methods to
 // easily populate the body of a custom `/update` request
 type UpdateBuilder struct {
-	commands map[Command]map[string]interface{}
+	additions []interface{}
+	deletions []interface{}
+	commands  map[Command]interface{}
 }
 
-// NewUpdateBuilder returns an initialized UpdateBuilder, a helper struct
-// that provides methods to easily populate a custom request to the
-// `/update` endpoint of the solr server. It's usage is suggested
-// for any cases that the methods provided by the Client
-// does not cover. More info:
+// NewUpdateBuilder returns an initialized UpdateBuilder, a helper struct that provides methods to
+// easily populate a custom request to the `/update` endpoint of the solr server, that can
+// contain more than one action. Multiple additions or deletion are grouped in an array
+// when sent to solr instead of a map (as seen in solr docs) for obvious reasons.
+// Therefore actual action hierarchy CANNOT be achieved! It's usage is suggested
+// for any cases that the methods provided by the Client does not cover.
+// More info:
 // https://lucene.apache.org/solr/guide/8_5/uploading-data-with-index-handlers.html#sending-json-update-commands
 func NewUpdateBuilder() *UpdateBuilder {
-	commands := make(map[Command]map[string]interface{})
+	commands := make(map[Command]interface{})
 	return &UpdateBuilder{commands: commands}
+}
+
+func (b *UpdateBuilder) add(item map[string]interface{}) {
+	b.commands[CommandAdd] = formatDocEntry(item)
+}
+
+func (b *UpdateBuilder) delete(doc interface{}) {
+	b.commands[CommandDelete] = doc
+}
+
+func (b *UpdateBuilder) prepare() {
+	if len(b.additions) > 0 {
+		b.commands[CommandAdd] = b.additions
+	}
+	if len(b.deletions) > 0 {
+		b.commands[CommandDelete] = b.deletions
+	}
 }
 
 // Add inserts an add command block to the body. The provided input
 // must be valid JSON. For atomic or in-place updates it is
 // recommended to use the `Update` method that is provided
 // by the Client interface.
-func (b *UpdateBuilder) Add(item map[string]interface{}) {
-	b.commands[CommandAdd] = formatDocEntry(item)
+func (b *UpdateBuilder) Add(item interface{}) {
+	b.additions = append(b.additions, item)
 }
 
-// Delete inserts a delete command block to the body. It should
+// DeleteByID inserts a delete command block to the body. It should
 // contain a document identifying the id (uniqueKey field)
-// or a query to properly work. It is recommended to use
-// the `DeleteByID`, `DeleteByQuery` methods that are
-// provided by the Client interface.
-func (b *UpdateBuilder) Delete(doc map[string]interface{}) {
-	b.commands[CommandDelete] = doc
+func (b *UpdateBuilder) DeleteByID(id string) {
+	b.deletions = append(b.deletions, formatDeleteByID(id))
 }
 
-// Commit inserts a commit command block to the body. Accepts options:
+// DeleteByQuery inserts a delete command block to the body. It should
+// contain a document identifying a query to properly work.
+func (b *UpdateBuilder) DeleteByQuery(query string) {
+	b.deletions = append(b.deletions, formatDeleteByQuery(query))
+}
+
+// commit inserts a commit command block to the body. Accepts options:
 // DoNotWaitSearcher: By default a commit command blocks until a new
 // 						searcher is opened and registered as the main query
 // 						searcher, making the changes visible.
 // ExpungeDeletes: Merges segments that have more than 10%
 // 						deleted docs, expunging the deleted
 // 						documents in the process.
-// It is recommended to use the `Commit` method that is provided
+// It is recommended to use the `commit` method that is provided
 // by the Client interface.
-func (b *UpdateBuilder) Commit(opts *CommitOptions) {
+func (b *UpdateBuilder) commit(opts *CommitOptions) {
 	doc := map[string]interface{}{}
 	if opts != nil {
 		if opts.DoNotWaitSearcher {
@@ -92,23 +116,23 @@ func (b *UpdateBuilder) Commit(opts *CommitOptions) {
 	b.commands[CommandCommit] = doc
 }
 
-// Rollback inserts a rollback command block to the body. The command is
-// always an empty object. It is recommended to use the `Rollback`
+// rollback inserts a rollback command block to the body. The command is
+// always an empty object. It is recommended to use the `rollback`
 // method that is provided by the Client interface.
-func (b *UpdateBuilder) Rollback() {
+func (b *UpdateBuilder) rollback() {
 	b.commands[CommandRollback] = map[string]interface{}{}
 }
 
-// Optimize inserts an optimize command block to the body. Accepts options:
+// optimize inserts an optimize command block to the body. Accepts options:
 // DoNotWaitSearcher: By default a commit command blocks until a new
 // 						searcher is opened and registered as the main queryja
 // 						searcher, making the changes visible.
 // MaxSegments: Merge the segments down to no more than this number
 // 					  of segments but does not guarantee that the goal
 // 						will be achieved.
-// It is recommended to use the `Optimize` method that is provided
+// It is recommended to use the `optimize` method that is provided
 // by the Client interface.
-func (b *UpdateBuilder) Optimize(opts *OptimizeOptions) {
+func (b *UpdateBuilder) optimize(opts *OptimizeOptions) {
 	doc := map[string]interface{}{}
 	if opts != nil {
 		if opts.DoNotWaitSearcher {

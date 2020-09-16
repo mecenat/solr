@@ -29,44 +29,32 @@ func main() {
 	}
 	fmt.Println(res.Header)
 
-	// Documents to be used in the update request body
-	filmDoc, err := data.Films[2].ToMap()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	delDoc := map[string]interface{}{
-		"id": "3",
-	}
-	delDoc2 := map[string]interface{}{
-		"query": "genre:horror",
-	}
-	delDoc3 := map[string]interface{}{
-		"query": "*:*",
-	}
-
 	// Create a new update builder. The builder provides helpful
 	// methods to easily create a complex json update body for
 	// the a /update request
 	ub := solr.NewUpdateBuilder()
 
-	// Delete all the documents
-	ub.Delete(delDoc3)
-	// Rollback
-	ub.Rollback()
-	// Delete document with id "3"
-	ub.Delete(delDoc)
-	// Add the document with id "3"
-	ub.Add(filmDoc)
-	// Delete all the documents which contain "horror" as one of their genres
-	ub.Delete(delDoc2)
-	// Commit everything, with the option of expunging deletes
-	ub.Commit(&solr.CommitOptions{ExpungeDeletes: true})
-	// Optimize the index
-	ub.Optimize(nil)
+	// Add 4 films (will overwrite by default)
+	ub.Add(data.Films[2])
+	ub.Add(data.Films[3])
+	ub.Add(data.Films[4])
+	ub.Add(data.Films[5])
+
+	// Delete films with IDs 3 & 4 but also all those that are horror films.
+	ub.DeleteByID(data.Films[3].ID)
+	ub.DeleteByID(data.Films[4].ID)
+	ub.DeleteByQuery("genre:horror")
+
+	// Change the name of 3 of the films and update it
+	data.Films[2].Name = "New Name"
+	data.Films[6].Name = "New Name"
+	data.Films[8].Name = "New Name"
+	ub.Add(data.Films[2])
+	ub.Add(data.Films[6])
+	ub.Add(data.Films[8])
 
 	// Send the custom update request
-	res, err = slr.CustomUpdate(ctx, ub)
+	res, err = slr.CustomUpdate(ctx, ub, &solr.WriteOptions{Commit: true})
 	if err != nil {
 		log.Fatal(err)
 	}

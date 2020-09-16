@@ -139,7 +139,7 @@ func (c *SingleClient) Clear(ctx context.Context) (*Response, error) {
 }
 
 // CustomUpdate ...
-func (c *SingleClient) CustomUpdate(ctx context.Context, item *UpdateBuilder) (*Response, error) {
-	url := c.formatURL("/update", "")
+func (c *SingleClient) CustomUpdate(ctx context.Context, item *UpdateBuilder, opts *WriteOptions) (*Response, error) {
+	url := c.formatURL("/update", opts.formatQueryFromOpts().Encode())
 	return customUpdate(ctx, c.conn, url, item)
 }

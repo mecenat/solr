@@ -174,7 +174,7 @@ func (c *PRClient) Clear(ctx context.Context) (*Response, error) {
 }
 
 // CustomUpdate ...
-func (c *PRClient) CustomUpdate(ctx context.Context, item *UpdateBuilder) (*Response, error) {
-	url := c.formatPrimaryURL("/update", "")
+func (c *PRClient) CustomUpdate(ctx context.Context, item *UpdateBuilder, opts *WriteOptions) (*Response, error) {
+	url := c.formatPrimaryURL("/update", opts.formatQueryFromOpts().Encode())
 	return customUpdate(ctx, c.primary, url, item)
 }
