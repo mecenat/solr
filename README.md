@@ -52,7 +52,7 @@ import "github.com/mecenat/solr"
 
 func main() {
 	ctx := context.Background()
-	ca, err := NewCoreAdmin(ctx, "host", http.DefaultClient)
+	ca, err := solr.NewCoreAdmin(ctx, "host", http.DefaultClient)
 	if err != nil {
 				...
 	}
@@ -66,7 +66,7 @@ import "github.com/mecenat/solr"
 
 func main() {
 	ctx := context.Background()
-	sa, err := NewSchemaAPI(ctx, "host", "core", http.DefaultClient)
+	sa, err := solr.NewSchemaAPI(ctx, "host", "core", http.DefaultClient)
 	if err != nil {
 				...
 	}
