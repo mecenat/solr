@@ -15,7 +15,7 @@ go get -u github.com/mecenat/solr
 
 ## Usage
 
-To create a new solr Client you need the host location (e.g. http://localhost:8983), the core name, and a http client (e.g. http.DefaultClient). Sending your own client could be useful when you need to wrap the client with another service, for example if you want to use AWS's X-Ray service to trace your API's calls.
+To create a new solr Client you need first to create a Connection. To create a Connection you need the host location (e.g. http://localhost:8983), the core name, and a http client (e.g. http.DefaultClient). Sending your own client could be useful when you need to wrap the client with another service, for example if you want to use AWS's X-Ray service to trace your API's calls.
 
 When using a single server:
 ```
@@ -24,8 +24,11 @@ package main
 import "github.com/mecenat/solr"
 
 func main() {
-	ctx := context.Background()
-	slr, err := solr.NewSingleClient(ctx, "host", "core", http.DefaultClient)
+	conn, err := solr.NewConnection("host", "core", http.DefaultClient)
+	if err != nil {
+				...
+	}
+	slr, err := solr.NewSingleClient(conn)
 	if err != nil {
 	      ...
 	}
@@ -37,8 +40,32 @@ package main
 import "github.com/mecenat/solr"
 
 func main() {
-	ctx := context.Background()
-	slr, err := solr.NewPrimaryReplicaClient(ctx, "primaryHost", "replicaHost", "core", primaryClient, replicatClient)
+	primaryConn, err := solr.NewConnection("primaryHost", "core", http.DefaultClient)
+	if err != nil {
+				...
+	}
+	replicaConn, err := solr.NewConnection("replicaHost", "core", http.DefaultClient)
+	if err != nil {
+				...
+	}
+	slr, err := solr.NewPrimaryReplicaClient(primaryConn, replicaConn)
+	if err != nil {
+	      ...
+	}
+```
+
+Aside from the normal Connection you can you a RetryableConnection which implements [Hashicorp's retryable HttpClient](https://github.com/hashicorp/go-retryablehttp) specifying the max timeout and provide that connection to the clients.
+```
+package main
+
+import "github.com/mecenat/solr"
+
+func main() {
+	retConn, err := solr.NewRetryableConnection("host", "core", http.DefaultClient, 500*time.Millisecond)
+	if err != nil {
+				...
+	}
+	slr, err := solr.NewSingleClient(retConn)
 	if err != nil {
 	      ...
 	}
