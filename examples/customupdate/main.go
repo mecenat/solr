@@ -16,7 +16,12 @@ import (
 // to send more than one update command to the solr server, using the UpdateBuilder.
 func main() {
 	ctx := context.Background()
-	slr, err := solr.NewSingleClient(ctx, "http://localhost:8983", "films", http.DefaultClient)
+	conn, err := solr.NewConnection("http://localhost:8983", "films", http.DefaultClient)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	slr, err := solr.NewSingleClient(conn)
 	if err != nil {
 		log.Fatal(err)
 	}
