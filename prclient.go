@@ -13,9 +13,8 @@ import (
 // for writing data, and a connection to a Replica server used
 // for reading data.
 type PRClient struct {
-	primary     *Connection
-	replica     *Connection
-	BasePath    string
+	primary     connection
+	replica     connection
 	PrimaryPath string
 	ReplicaPath string
 }
@@ -23,43 +22,21 @@ type PRClient struct {
 // NewPrimaryReplicaClient returns two connections from the provided host and cores, one for the primary
 // server and another for the replica. By default it is assumed that the primary server is used for
 // writing data, and the replica server for reading data.
-func NewPrimaryReplicaClient(ctx context.Context, pHost, rHost, core string, pClient, rClient *http.Client) (Client, error) {
-	if pHost == "" || rHost == "" || core == "" {
-		return nil, ErrInvalidConfig
-	}
-
-	_, err := url.ParseRequestURI(pHost)
-	if err != nil {
-		return nil, err
-	}
-
-	_, err = url.ParseRequestURI(rHost)
-	if err != nil {
-		return nil, err
-	}
-
-	pConn := &Connection{
-		Host:       pHost,
-		Core:       core,
-		httpClient: pClient,
-	}
-	pBasePath := formatBasePath(pHost, core)
-	rConn := &Connection{
-		Host:       rHost,
-		Core:       core,
-		httpClient: rClient,
-	}
-	rBasePath := formatBasePath(rHost, core)
-	solrClient := &PRClient{primary: pConn, replica: rConn, PrimaryPath: pBasePath, ReplicaPath: rBasePath}
-	return solrClient, nil
+func NewPrimaryReplicaClient(primaryConn, replicaConn connection) (Client, error) {
+	pBasePath := primaryConn.formatBasePath()
+	rBasePath := replicaConn.formatBasePath()
+	return &PRClient{
+		primary:     primaryConn,
+		replica:     replicaConn,
+		PrimaryPath: pBasePath,
+		ReplicaPath: rBasePath,
+	}, nil
 }
 
 // SetBasicAuth sets auth credentials if needed.
 func (c *PRClient) SetBasicAuth(username, password string) {
-	c.primary.Username = username
-	c.replica.Username = username
-	c.primary.Password = password
-	c.replica.Password = password
+	c.primary.setBasicAuth(username, password)
+	c.replica.setBasicAuth(username, password)
 }
 
 func (c *PRClient) formatPrimaryURL(path string, query string) string {

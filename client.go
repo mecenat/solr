@@ -11,35 +11,20 @@ import (
 // SingleClient implements the solr interface and is the basic connection
 // to a solr server.
 type SingleClient struct {
-	conn     *Connection
+	conn     connection
 	BasePath string
 }
 
 // NewSingleClient returns a connection to the solr client provided by the given
 // host and core.
-func NewSingleClient(ctx context.Context, host, core string, client *http.Client) (Client, error) {
-	if host == "" || core == "" {
-		return nil, ErrInvalidConfig
-	}
-
-	_, err := url.ParseRequestURI(host)
-	if err != nil {
-		return nil, err
-	}
-
-	conn := &Connection{
-		Host:       host,
-		Core:       core,
-		httpClient: client,
-	}
-	bp := formatBasePath(host, core)
+func NewSingleClient(conn connection) (Client, error) {
+	bp := conn.formatBasePath()
 	return &SingleClient{conn: conn, BasePath: bp}, nil
 }
 
 // SetBasicAuth sets auth credentials if needed.
 func (c *SingleClient) SetBasicAuth(username, password string) {
-	c.conn.Username = username
-	c.conn.Password = password
+	c.conn.setBasicAuth(username, password)
 }
 
 func (c *SingleClient) formatURL(path string, query string) string {

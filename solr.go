@@ -101,11 +101,11 @@ type Client interface {
 	CustomUpdate(ctx context.Context, item *UpdateBuilder, opts *WriteOptions) (*Response, error)
 }
 
-func read(ctx context.Context, conn *Connection, url string) (*Response, error) {
+func read(ctx context.Context, conn connection, url string) (*Response, error) {
 	return conn.request(ctx, http.MethodGet, url, nil)
 }
 
-func create(ctx context.Context, conn *Connection, url string, item interface{}) (*Response, error) {
+func create(ctx context.Context, conn connection, url string, item interface{}) (*Response, error) {
 	bodyBytes, err := interfaceToBytes(item)
 	if err != nil {
 		return nil, err
@@ -119,7 +119,7 @@ func create(ctx context.Context, conn *Connection, url string, item interface{})
 	return conn.request(ctx, http.MethodPost, url, bodyBytes)
 }
 
-func batchCreate(ctx context.Context, conn *Connection, url string, items interface{}) (*Response, error) {
+func batchCreate(ctx context.Context, conn connection, url string, items interface{}) (*Response, error) {
 	bodyBytes, err := interfaceToBytes(items)
 	if err != nil {
 		return nil, err
@@ -133,7 +133,7 @@ func batchCreate(ctx context.Context, conn *Connection, url string, items interf
 	return conn.request(ctx, http.MethodPost, url, bodyBytes)
 }
 
-func update(ctx context.Context, conn *Connection, url string, item *UpdatedFields) (*Response, error) {
+func update(ctx context.Context, conn connection, url string, item *UpdatedFields) (*Response, error) {
 	ub := NewUpdateBuilder()
 	ub.add(item.fields)
 
@@ -145,7 +145,7 @@ func update(ctx context.Context, conn *Connection, url string, item *UpdatedFiel
 	return conn.request(ctx, http.MethodPost, url, bodyBytes)
 }
 
-func delete(ctx context.Context, conn *Connection, url string, doc Doc) (*Response, error) {
+func delete(ctx context.Context, conn connection, url string, doc Doc) (*Response, error) {
 	ub := NewUpdateBuilder()
 	ub.delete(doc)
 
@@ -157,7 +157,7 @@ func delete(ctx context.Context, conn *Connection, url string, doc Doc) (*Respon
 	return conn.request(ctx, http.MethodPost, url, bodyBytes)
 }
 
-func commit(ctx context.Context, conn *Connection, url string, opts *CommitOptions) (*Response, error) {
+func commit(ctx context.Context, conn connection, url string, opts *CommitOptions) (*Response, error) {
 	ub := NewUpdateBuilder()
 	ub.commit(opts)
 
@@ -169,7 +169,7 @@ func commit(ctx context.Context, conn *Connection, url string, opts *CommitOptio
 	return conn.request(ctx, http.MethodPost, url, bodyBytes)
 }
 
-func optimize(ctx context.Context, conn *Connection, url string, opts *OptimizeOptions) (*Response, error) {
+func optimize(ctx context.Context, conn connection, url string, opts *OptimizeOptions) (*Response, error) {
 	ub := NewUpdateBuilder()
 	ub.optimize(opts)
 
@@ -181,7 +181,7 @@ func optimize(ctx context.Context, conn *Connection, url string, opts *OptimizeO
 	return conn.request(ctx, http.MethodPost, url, bodyBytes)
 }
 
-func rollback(ctx context.Context, conn *Connection, url string) (*Response, error) {
+func rollback(ctx context.Context, conn connection, url string) (*Response, error) {
 	ub := NewUpdateBuilder()
 	ub.rollback()
 
@@ -193,7 +193,7 @@ func rollback(ctx context.Context, conn *Connection, url string) (*Response, err
 	return conn.request(ctx, http.MethodPost, url, bodyBytes)
 }
 
-func customUpdate(ctx context.Context, conn *Connection, url string, item *UpdateBuilder) (*Response, error) {
+func customUpdate(ctx context.Context, conn connection, url string, item *UpdateBuilder) (*Response, error) {
 	item.prepare()
 
 	bodyBytes, err := interfaceToBytes(item.commands)
