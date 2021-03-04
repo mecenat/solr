@@ -115,7 +115,6 @@ func NewRetryableConnection(host, core string, client *http.Client, maxTimeout t
 
 	retryClient := retryablehttp.NewClient()
 	retryClient.HTTPClient = client
-	retryClient.HTTPClient.Timeout = maxTimeout
 	retryClient.RetryWaitMin = 10 * time.Millisecond
 	retryClient.RetryWaitMax = maxTimeout
 	retryClient.RetryMax = 10
