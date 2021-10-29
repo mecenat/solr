@@ -113,7 +113,7 @@ func create(ctx context.Context, conn connection, url string, item interface{}) 
 
 	err = isJSON(bodyBytes)
 	if err != nil {
-		return nil, fmt.Errorf("Invalid JSON provided: %s", err)
+		return nil, fmt.Errorf("invalid JSON provided: %s", err)
 	}
 
 	return conn.request(ctx, http.MethodPost, url, bodyBytes)
@@ -127,7 +127,7 @@ func batchCreate(ctx context.Context, conn connection, url string, items interfa
 
 	err = isArrayOfJSON(bodyBytes)
 	if err != nil {
-		return nil, fmt.Errorf("Invalid Array of JSON provided: %s", err)
+		return nil, fmt.Errorf("invalid Array of JSON provided: %s", err)
 	}
 
 	return conn.request(ctx, http.MethodPost, url, bodyBytes)

@@ -44,7 +44,7 @@ func main() {
 
 	res, err := sa.AddField(ctx, id)
 	if err != nil {
-		log.Fatal(err)
+		// log.Fatal(err)
 	}
 	fmt.Println(res.Header)
 

@@ -34,22 +34,22 @@ func TestNewConnection(t *testing.T) {
 }
 
 func TestNewRetryableConnection(t *testing.T) {
-	_, err := NewRetryableConnection("", "mycore", http.DefaultClient, 500*time.Millisecond)
+	_, err := NewRetryableConnection("", "mycore", http.DefaultClient, 500*time.Millisecond, false)
 	if err == nil {
 		t.Fatal("shouldn't run without a host")
 	}
 
-	_, err = NewRetryableConnection("invalid", "mycore", http.DefaultClient, 500*time.Millisecond)
+	_, err = NewRetryableConnection("invalid", "mycore", http.DefaultClient, 500*time.Millisecond, false)
 	if err == nil {
 		t.Fatal("shouldn't run without a proper host")
 	}
 
-	_, err = NewRetryableConnection("http://localhost", "", http.DefaultClient, 500*time.Millisecond)
+	_, err = NewRetryableConnection("http://localhost", "", http.DefaultClient, 500*time.Millisecond, false)
 	if err == nil {
 		t.Fatal("shouldn't run without a core defined")
 	}
 
-	c, err := NewRetryableConnection("http://localhost:8983", "mycore", http.DefaultClient, 500*time.Millisecond)
+	c, err := NewRetryableConnection("http://localhost:8983", "mycore", http.DefaultClient, 500*time.Millisecond, false)
 	if err != nil {
 		t.Fatal("shouldn't get an error but got one")
 	}

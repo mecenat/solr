@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"io"
+	"log"
 	"net/http"
 	"net/url"
 	"time"
@@ -103,7 +105,7 @@ type RetryableConnection struct {
 }
 
 // NewRetryableConnection ...
-func NewRetryableConnection(host, core string, client *http.Client, maxTimeout time.Duration) (*RetryableConnection, error) {
+func NewRetryableConnection(host, core string, client *http.Client, maxTimeout time.Duration, noLog bool) (*RetryableConnection, error) {
 	if host == "" || core == "" {
 		return nil, ErrInvalidConfig
 	}
@@ -118,6 +120,9 @@ func NewRetryableConnection(host, core string, client *http.Client, maxTimeout t
 	retryClient.RetryWaitMin = 10 * time.Millisecond
 	retryClient.RetryWaitMax = maxTimeout
 	retryClient.RetryMax = 10
+	if noLog {
+		retryClient.Logger = log.New(io.Discard, "", log.LstdFlags)
+	}
 
 	return &RetryableConnection{
 		Host:        host,

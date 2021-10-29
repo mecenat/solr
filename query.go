@@ -311,8 +311,8 @@ const (
 
 // Possible errors returned from improper use of the Collapsing Query Parser
 var (
-	ErrParamsRequired    = errors.New("Param field is required for the CollapsingQParser")
-	ErrTooManyParams     = errors.New("Only one of Max, Min or Sort may be populated")
+	ErrParamsRequired    = errors.New("param field is required for the CollapsingQParser")
+	ErrTooManyParams     = errors.New("only one of Max, Min or Sort may be populated")
 	ErrInvalidNullPolicy = errors.New("invalid null policy, please use one of the provided")
 	ErrInvalidHint       = errors.New("invalid hint, please use one of the provided")
 )
