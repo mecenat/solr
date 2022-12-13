@@ -104,8 +104,16 @@ type RetryableConnection struct {
 	retryClient *retryablehttp.Client
 }
 
+type RetryableConfig struct {
+	Timeout      time.Duration
+	RetryWaitMin time.Duration
+	RetryWaitMax time.Duration
+	RetryMax     int
+	NoLog        bool
+}
+
 // NewRetryableConnection ...
-func NewRetryableConnection(host, core string, client *http.Client, maxTimeout time.Duration, noLog bool) (*RetryableConnection, error) {
+func NewRetryableConnection(host, core string, client *http.Client, conf *RetryableConfig) (*RetryableConnection, error) {
 	if host == "" || core == "" {
 		return nil, ErrInvalidConfig
 	}
@@ -115,19 +123,30 @@ func NewRetryableConnection(host, core string, client *http.Client, maxTimeout t
 		return nil, err
 	}
 
+	if conf == nil {
+		conf = &RetryableConfig{
+			Timeout:      10 * time.Second,
+			RetryWaitMin: 50 * time.Millisecond,
+			RetryWaitMax: 2 * time.Second,
+			RetryMax:     4,
+			NoLog:        true,
+		}
+	}
+
 	retryClient := retryablehttp.NewClient()
 	retryClient.HTTPClient = client
-	retryClient.RetryWaitMin = 10 * time.Millisecond
-	retryClient.RetryWaitMax = maxTimeout
-	retryClient.RetryMax = 10
-	if noLog {
+	retryClient.HTTPClient.Timeout = conf.Timeout
+	retryClient.RetryWaitMin = conf.RetryWaitMin
+	retryClient.RetryWaitMax = conf.RetryWaitMax
+	retryClient.RetryMax = conf.RetryMax
+	if conf.NoLog {
 		retryClient.Logger = log.New(io.Discard, "", log.LstdFlags)
 	}
 
 	return &RetryableConnection{
 		Host:        host,
 		Core:        core,
-		Timeout:     maxTimeout,
+		Timeout:     conf.Timeout,
 		httpClient:  client,
 		retryClient: retryClient,
 	}, nil
