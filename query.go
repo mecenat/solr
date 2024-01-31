@@ -106,7 +106,7 @@ var (
 // WriteOptions contains options for write actions. Those include:
 // Commit: Autocommit all changes alongside the current request
 // CommitWithin: Autocommit all changes after the specified
-//     time (in miliseconds)
+// time (in miliseconds)
 // AllowDuplicate: Allows uniqueKey duplication
 type WriteOptions struct {
 	Commit         bool
@@ -259,13 +259,14 @@ func (q *Query) SetSort(value string) {
 	q.params.Set(OptionSort, value)
 }
 
-// // SetRows sets the amount of rows to be returned from the query overwritting the
-// // default value lucene.apache.org/solr/guide/8_5/common-query-parameters.html#rows-parameter
-// func (q *Query) SetRows(value int) {
-// 	sv := strconv.Itoa(value)
-// 	q.params.Set(QueryOptionRows, sv)
-// }
+// SetRows sets the amount of rows to be returned from the query overwritting the
+// default value lucene.apache.org/solr/guide/8_5/common-query-parameters.html#rows-parameter
+func (q *Query) SetRows(value int) {
+	sv := strconv.Itoa(value)
+	q.params.Set(OptionRows, sv)
+}
 
+// String returns the string representation of the query.
 func (q *Query) String() string {
 	if len(q.q) > 0 {
 		q.params.Set(OptionQ, strings.Join(q.q, fmt.Sprintf(" %s ", q.qOp)))
