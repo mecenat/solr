@@ -22,7 +22,7 @@ type PRClient struct {
 // NewPrimaryReplicaClient returns two connections from the provided host and cores, one for the primary
 // server and another for the replica. By default it is assumed that the primary server is used for
 // writing data, and the replica server for reading data.
-func NewPrimaryReplicaClient(primaryConn, replicaConn connection) (Client, error) {
+func NewPrimaryReplicaClient(primaryConn, replicaConn connection) (Solr, error) {
 	pBasePath := primaryConn.formatBasePath()
 	rBasePath := replicaConn.formatBasePath()
 	return &PRClient{
@@ -81,9 +81,12 @@ func (c *PRClient) Search(ctx context.Context, q *Query) (*Response, error) {
 }
 
 // Get ...
-func (c *PRClient) Get(ctx context.Context, id string) (*Response, error) {
+func (c *PRClient) Get(ctx context.Context, id, filter string) (*Response, error) {
 	vals := make(url.Values)
 	vals.Set("id", id)
+	if filter != "" {
+		vals.Set("fq", filter)
+	}
 	url := c.formatReplicaURL("/get", vals.Encode())
 	return read(ctx, c.replica, url)
 }
@@ -92,7 +95,9 @@ func (c *PRClient) Get(ctx context.Context, id string) (*Response, error) {
 func (c *PRClient) BatchGet(ctx context.Context, ids []string, filter string) (*Response, error) {
 	vals := make(url.Values)
 	vals.Set("ids", strings.Join(ids, ","))
-	vals.Set("fq", filter)
+	if filter != "" {
+		vals.Set("fq", filter)
+	}
 	url := c.formatReplicaURL("/get", vals.Encode())
 	return read(ctx, c.replica, url)
 }

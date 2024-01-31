@@ -17,7 +17,7 @@ type SingleClient struct {
 
 // NewSingleClient returns a connection to the solr client provided by the given
 // host and core.
-func NewSingleClient(conn connection) (Client, error) {
+func NewSingleClient(conn connection) (Solr, error) {
 	bp := conn.formatBasePath()
 	return &SingleClient{conn: conn, BasePath: bp}, nil
 }
@@ -54,9 +54,12 @@ func (c *SingleClient) Search(ctx context.Context, q *Query) (*Response, error) 
 }
 
 // Get ...
-func (c *SingleClient) Get(ctx context.Context, id string) (*Response, error) {
+func (c *SingleClient) Get(ctx context.Context, id, filter string) (*Response, error) {
 	vals := make(url.Values)
 	vals.Set("id", id)
+	if filter != "" {
+		vals.Set("fq", filter)
+	}
 	url := c.formatURL("/get", vals.Encode())
 	return read(ctx, c.conn, url)
 }
@@ -65,7 +68,9 @@ func (c *SingleClient) Get(ctx context.Context, id string) (*Response, error) {
 func (c *SingleClient) BatchGet(ctx context.Context, ids []string, filter string) (*Response, error) {
 	vals := make(url.Values)
 	vals.Set("ids", strings.Join(ids, ","))
-	vals.Set("fq", filter)
+	if filter != "" {
+		vals.Set("fq", filter)
+	}
 	url := c.formatURL("/get", vals.Encode())
 	return read(ctx, c.conn, url)
 }

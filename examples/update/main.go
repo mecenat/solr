@@ -65,7 +65,7 @@ func main() {
 	fmt.Println(res.Header)
 
 	// RealTime Get the film that was just added
-	res, err = slr.Get(ctx, data.Films[0].ID)
+	res, err = slr.Get(ctx, data.Films[0].ID, "")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -79,7 +79,7 @@ func main() {
 	fmt.Println(res)
 
 	// RealTime Get the film that was just added
-	res, err = slr.Get(ctx, data.Films[0].ID)
+	res, err = slr.Get(ctx, data.Films[0].ID, "")
 	if err != nil {
 		log.Fatal(err)
 	}

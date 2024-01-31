@@ -12,8 +12,8 @@ import (
 	"net/http"
 )
 
-// Client is the interface encompasing all the solr service methods
-type Client interface {
+// Solr is the interface encompasing all the solr service methods
+type Solr interface {
 	// SetBasicAuth sets the authentication credentials if needed.
 	SetBasicAuth(username, password string)
 
@@ -31,9 +31,10 @@ type Client interface {
 
 	// Get performs a realtime get call to the solr server that returns the latest version of the document specified
 	// by its id (uniqueKey field) without the associated cost of reopening a searcher. This is primarily useful
-	// when using Solr as a NoSQL data store and not just a search index. For more info:
+	// when using Solr as a NoSQL data store and not just a search index. The provided filter should
+	// follow the format of the `fq` parameter but be concatenated in one string. For more info:
 	// https://lucene.apache.org/solr/guide/8_5/realtime-get.html
-	Get(ctx context.Context, id string) (*Response, error)
+	Get(ctx context.Context, id, filter string) (*Response, error)
 
 	// BatchGet performs a realtime get call to the solr server that returns the latest version of multiple documents
 	// specified by their id (uniqueKey field) and filtered by the provided filter. The provided filter should
