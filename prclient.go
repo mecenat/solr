@@ -22,7 +22,7 @@ type PRClient struct {
 // NewPrimaryReplicaClient returns two connections from the provided host and cores, one for the primary
 // server and another for the replica. By default it is assumed that the primary server is used for
 // writing data, and the replica server for reading data.
-func NewPrimaryReplicaClient(primaryConn, replicaConn connection) (Solr, error) {
+func NewPrimaryReplicaClient(primaryConn, replicaConn connection) (Client, error) {
 	pBasePath := primaryConn.formatBasePath()
 	rBasePath := replicaConn.formatBasePath()
 	return &PRClient{

@@ -17,7 +17,7 @@ type SingleClient struct {
 
 // NewSingleClient returns a connection to the solr client provided by the given
 // host and core.
-func NewSingleClient(conn connection) (Solr, error) {
+func NewSingleClient(conn connection) (Client, error) {
 	bp := conn.formatBasePath()
 	return &SingleClient{conn: conn, BasePath: bp}, nil
 }

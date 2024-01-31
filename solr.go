@@ -12,8 +12,8 @@ import (
 	"net/http"
 )
 
-// Solr is the interface encompasing all the solr service methods
-type Solr interface {
+// Client is the interface encompasing all the solr service methods
+type Client interface {
 	// SetBasicAuth sets the authentication credentials if needed.
 	SetBasicAuth(username, password string)
 
