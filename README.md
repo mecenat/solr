@@ -100,4 +100,5 @@ func main() {
 ```
 
 ## License
-MIT
+
+This library is licensed under the MIT license. It depends on github.com/hashicorp/go-cleanhttp and github.com/hashicorp/go-retryablehttp, which is licensed under the Mozilla Public License (MPL).
