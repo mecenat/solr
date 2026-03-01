@@ -99,6 +99,17 @@ func main() {
 	}
 ```
 
+## Releasing
+
+To create a new release, push a semver tag to `master`:
+
+```
+git tag v1.5.0
+git push origin v1.5.0
+```
+
+This triggers a GitHub Actions workflow that runs tests and creates a GitHub release with auto-generated notes.
+
 ## License
 
 This library is licensed under the MIT license. It depends on github.com/hashicorp/go-cleanhttp and github.com/hashicorp/go-retryablehttp, which is licensed under the Mozilla Public License (MPL).
