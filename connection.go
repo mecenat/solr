@@ -58,7 +58,11 @@ func (c *Connection) setBasicAuth(username, password string) {
 }
 
 func (c *Connection) request(ctx context.Context, method, url string, body []byte) (*Response, error) {
-	req, err := http.NewRequest(method, url, bytes.NewBuffer(body))
+	var bodyReader io.Reader
+	if body != nil {
+		bodyReader = bytes.NewBuffer(body)
+	}
+	req, err := http.NewRequest(method, url, bodyReader)
 	if err != nil {
 		return nil, err
 	}
@@ -75,7 +79,10 @@ func (c *Connection) request(ctx context.Context, method, url string, body []byt
 	}
 
 	var r Response
-	defer res.Body.Close()
+	defer func() {
+		io.Copy(io.Discard, res.Body)
+		res.Body.Close()
+	}()
 
 	err = json.NewDecoder(res.Body).Decode(&r)
 	if err != nil {
@@ -162,7 +169,11 @@ func (c *RetryableConnection) setBasicAuth(username, password string) {
 }
 
 func (c *RetryableConnection) request(ctx context.Context, method, path string, body []byte) (*Response, error) {
-	req, err := retryablehttp.NewRequest(method, path, bytes.NewBuffer(body))
+	var bodyReader io.Reader
+	if body != nil {
+		bodyReader = bytes.NewBuffer(body)
+	}
+	req, err := retryablehttp.NewRequest(method, path, bodyReader)
 	if err != nil {
 		return nil, err
 	}
@@ -178,7 +189,10 @@ func (c *RetryableConnection) request(ctx context.Context, method, path string, 
 	}
 
 	var r Response
-	defer res.Body.Close()
+	defer func() {
+		io.Copy(io.Discard, res.Body)
+		res.Body.Close()
+	}()
 
 	err = json.NewDecoder(res.Body).Decode(&r)
 	if err != nil {

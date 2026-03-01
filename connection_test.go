@@ -1,7 +1,11 @@
 package solr
 
 import (
+	"context"
+	"net"
 	"net/http"
+	"net/http/httptest"
+	"sync/atomic"
 	"testing"
 	"time"
 )
@@ -30,6 +34,41 @@ func TestNewConnection(t *testing.T) {
 	_, err = NewSingleClient(c)
 	if err != nil {
 		t.Fatal("shouldn't get an error but got one")
+	}
+}
+
+func TestConnectionDrainsResponseBody(t *testing.T) {
+	var connCount int32
+	ts := httptest.NewUnstartedServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.Write([]byte(`{"responseHeader":{"status":0,"QTime":1}}` + "\n\n\n"))
+	}))
+	ts.Config.ConnState = func(conn net.Conn, state http.ConnState) {
+		if state == http.StateNew {
+			atomic.AddInt32(&connCount, 1)
+		}
+	}
+	ts.Start()
+	defer ts.Close()
+
+	client := &http.Client{Transport: &http.Transport{}}
+	conn, err := NewConnection(ts.URL, "testcore", client)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	ctx := context.Background()
+	url := conn.formatBasePath() + "/select?q=*%3A*&wt=json"
+
+	for i := 0; i < 3; i++ {
+		_, err = conn.request(ctx, http.MethodGet, url, nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	if c := atomic.LoadInt32(&connCount); c != 1 {
+		t.Errorf("expected 1 connection (reuse), got %d", c)
 	}
 }
 
