@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"net/http"
 
 	"github.com/mecenat/solr"
 )
@@ -12,7 +11,7 @@ import (
 func main() {
 	ctx := context.Background()
 	// Initialize a new solr schema API
-	sa, err := solr.NewSchemaAPI(ctx, "http://localhost:8983", "films", http.DefaultClient)
+	sa, err := solr.NewSchemaAPI(ctx, "http://localhost:8983", "films", solr.NewDefaultHTTPClient())
 	if err != nil {
 		log.Fatal(err)
 	}

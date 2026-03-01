@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"log"
-	"net/http"
 
 	"github.com/mecenat/solr"
 	"github.com/mecenat/solr/examples/data"
@@ -16,7 +15,7 @@ import (
 // to send more than one update command to the solr server, using the UpdateBuilder.
 func main() {
 	ctx := context.Background()
-	conn, err := solr.NewConnection("http://localhost:8983", "films", http.DefaultClient)
+	conn, err := solr.NewConnection("http://localhost:8983", "films", solr.NewDefaultHTTPClient())
 	if err != nil {
 		log.Fatal(err)
 	}

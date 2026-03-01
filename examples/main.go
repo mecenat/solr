@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"net/http"
 
 	"github.com/mecenat/solr"
 )
@@ -15,7 +14,7 @@ func main() {
 	ctx := context.Background()
 
 	// Initialize a new solr Core Admin API
-	ca, err := solr.NewCoreAdmin(ctx, "http://localhost:8983", http.DefaultClient)
+	ca, err := solr.NewCoreAdmin(ctx, "http://localhost:8983", solr.NewDefaultHTTPClient())
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -32,7 +31,7 @@ func main() {
 	fmt.Println(cres.Header)
 
 	// Initialize a new solr schema API
-	sa, err := solr.NewSchemaAPI(ctx, "http://localhost:8983", "films", http.DefaultClient)
+	sa, err := solr.NewSchemaAPI(ctx, "http://localhost:8983", "films", solr.NewDefaultHTTPClient())
 	if err != nil {
 		log.Fatal(err)
 	}

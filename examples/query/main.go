@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"net/http"
 
 	"github.com/mecenat/solr"
 	"github.com/mecenat/solr/examples/data"
@@ -13,7 +12,7 @@ import (
 
 func main() {
 	ctx := context.Background()
-	conn, err := solr.NewConnection("http://localhost:8983", "films", http.DefaultClient)
+	conn, err := solr.NewConnection("http://localhost:8983", "films", solr.NewDefaultHTTPClient())
 	if err != nil {
 		log.Fatal(err)
 	}

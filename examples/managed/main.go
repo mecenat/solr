@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"net/http"
 
 	"github.com/mecenat/solr"
 )
@@ -15,7 +14,7 @@ func main() {
 	// To test the managed resources we need a supporting field type. Let's say for example
 	// we want to have a managed synonyms list. We create the equivalent field type in our
 	// core schema.
-	sa, err := solr.NewSchemaAPI(ctx, "http://localhost:8983", "films", http.DefaultClient)
+	sa, err := solr.NewSchemaAPI(ctx, "http://localhost:8983", "films", solr.NewDefaultHTTPClient())
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -51,7 +50,7 @@ func main() {
 	fmt.Println(scRes.Header)
 
 	// Initialize a new solr Managed Admin API
-	ma, err := solr.NewManagedAPI(ctx, "http://localhost:8983", "films", http.DefaultClient)
+	ma, err := solr.NewManagedAPI(ctx, "http://localhost:8983", "films", solr.NewDefaultHTTPClient())
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -101,7 +100,7 @@ func main() {
 	fmt.Println(res.Synonyms.ManagedMap)
 
 	// in order for our edits to be saved we need to reload the core, using the CoreAPI
-	ca, err := solr.NewCoreAdmin(ctx, "http://localhost:8983", http.DefaultClient)
+	ca, err := solr.NewCoreAdmin(ctx, "http://localhost:8983", solr.NewDefaultHTTPClient())
 	if err != nil {
 		log.Fatal(err)
 	}

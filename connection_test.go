@@ -106,3 +106,49 @@ func TestNewRetryableConnection(t *testing.T) {
 		t.Fatal("shouldn't get an error but got one")
 	}
 }
+
+func TestNewDefaultHTTPClient(t *testing.T) {
+	client := NewDefaultHTTPClient()
+	if client == nil {
+		t.Fatal("expected non-nil client")
+	}
+
+	transport, ok := client.Transport.(*http.Transport)
+	if !ok {
+		t.Fatal("expected *http.Transport")
+	}
+
+	if transport.MaxIdleConns != 100 {
+		t.Fatalf("expected MaxIdleConns=100, got %d", transport.MaxIdleConns)
+	}
+	if transport.MaxIdleConnsPerHost != 100 {
+		t.Fatalf("expected MaxIdleConnsPerHost=100, got %d", transport.MaxIdleConnsPerHost)
+	}
+	if transport.IdleConnTimeout != 90*time.Second {
+		t.Fatalf("expected IdleConnTimeout=90s, got %v", transport.IdleConnTimeout)
+	}
+	if !transport.ForceAttemptHTTP2 {
+		t.Fatal("expected ForceAttemptHTTP2=true")
+	}
+}
+
+func TestNewDefaultHTTPClientWorksWithNewConnection(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.Write([]byte(`{"responseHeader":{"status":0,"QTime":1}}`))
+	}))
+	defer ts.Close()
+
+	client := NewDefaultHTTPClient()
+	conn, err := NewConnection(ts.URL, "testcore", client)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	ctx := context.Background()
+	url := conn.formatBasePath() + "/admin/ping"
+	_, err = conn.request(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		t.Fatalf("request with default client failed: %v", err)
+	}
+}

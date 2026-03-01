@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"net/http"
 	"time"
 
 	"github.com/mecenat/solr"
@@ -13,7 +12,7 @@ import (
 func main() {
 	ctx := context.Background()
 	// Initialize a new solr Core Admin API
-	ca, err := solr.NewCoreAdmin(ctx, "http://localhost:8983", http.DefaultClient)
+	ca, err := solr.NewCoreAdmin(ctx, "http://localhost:8983", solr.NewDefaultHTTPClient())
 	if err != nil {
 		log.Fatal(err)
 	}

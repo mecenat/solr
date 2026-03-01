@@ -159,6 +159,21 @@ func NewRetryableConnection(host, core string, client *http.Client, conf *Retrya
 	}, nil
 }
 
+// NewDefaultHTTPClient returns an *http.Client configured with sensible defaults
+// for connection pooling and keep-alive. Use this instead of http.DefaultClient
+// which only keeps 2 idle connections per host, causing excessive reconnections
+// under concurrent load.
+func NewDefaultHTTPClient() *http.Client {
+	return &http.Client{
+		Transport: &http.Transport{
+			MaxIdleConns:        100,
+			MaxIdleConnsPerHost: 100,
+			IdleConnTimeout:     90 * time.Second,
+			ForceAttemptHTTP2:   true,
+		},
+	}
+}
+
 func (c *RetryableConnection) formatBasePath() string {
 	return formatBasePath(c.Host, c.Core)
 }

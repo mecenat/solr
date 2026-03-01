@@ -15,7 +15,7 @@ go get -u github.com/mecenat/solr
 
 ## Usage
 
-To create a new solr Client you need first to create a Connection. To create a Connection you need the host location (e.g. http://localhost:8983), the core name, and a http client (e.g. http.DefaultClient). Sending your own client could be useful when you need to wrap the client with another service, for example if you want to use AWS's X-Ray service to trace your API's calls.
+To create a new solr Client you need first to create a Connection. To create a Connection you need the host location (e.g. http://localhost:8983), the core name, and a http client. Use `solr.NewDefaultHTTPClient()` for a client with sensible connection pooling defaults. Sending your own client could be useful when you need to wrap the client with another service, for example if you want to use AWS's X-Ray service to trace your API's calls or granular control over connection limits.
 
 When using a single server:
 ```
@@ -24,7 +24,7 @@ package main
 import "github.com/mecenat/solr"
 
 func main() {
-	conn, err := solr.NewConnection("host", "core", http.DefaultClient)
+	conn, err := solr.NewConnection("host", "core", solr.NewDefaultHTTPClient())
 	if err != nil {
 				...
 	}
@@ -40,11 +40,11 @@ package main
 import "github.com/mecenat/solr"
 
 func main() {
-	primaryConn, err := solr.NewConnection("primaryHost", "core", http.DefaultClient)
+	primaryConn, err := solr.NewConnection("primaryHost", "core", solr.NewDefaultHTTPClient())
 	if err != nil {
 				...
 	}
-	replicaConn, err := solr.NewConnection("replicaHost", "core", http.DefaultClient)
+	replicaConn, err := solr.NewConnection("replicaHost", "core", solr.NewDefaultHTTPClient())
 	if err != nil {
 				...
 	}
@@ -61,7 +61,7 @@ package main
 import "github.com/mecenat/solr"
 
 func main() {
-	retConn, err := solr.NewRetryableConnection("host", "core", http.DefaultClient, 500*time.Millisecond)
+	retConn, err := solr.NewRetryableConnection("host", "core", solr.NewDefaultHTTPClient(), 500*time.Millisecond)
 	if err != nil {
 				...
 	}
@@ -79,7 +79,7 @@ import "github.com/mecenat/solr"
 
 func main() {
 	ctx := context.Background()
-	ca, err := solr.NewCoreAdmin(ctx, "host", http.DefaultClient)
+	ca, err := solr.NewCoreAdmin(ctx, "host", solr.NewDefaultHTTPClient())
 	if err != nil {
 				...
 	}
@@ -93,7 +93,7 @@ import "github.com/mecenat/solr"
 
 func main() {
 	ctx := context.Background()
-	sa, err := solr.NewSchemaAPI(ctx, "host", "core", http.DefaultClient)
+	sa, err := solr.NewSchemaAPI(ctx, "host", "core", solr.NewDefaultHTTPClient())
 	if err != nil {
 				...
 	}
