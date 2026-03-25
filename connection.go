@@ -14,7 +14,7 @@ import (
 )
 
 type connection interface {
-	request(ctx context.Context, method, path string, body []byte) (*Response, error)
+	request(ctx context.Context, method, path, contentType string, body []byte) (*Response, error)
 	formatBasePath() string
 	setBasicAuth(username, password string)
 }
@@ -57,7 +57,7 @@ func (c *Connection) setBasicAuth(username, password string) {
 	c.Password = password
 }
 
-func (c *Connection) request(ctx context.Context, method, url string, body []byte) (*Response, error) {
+func (c *Connection) request(ctx context.Context, method, url, contentType string, body []byte) (*Response, error) {
 	var bodyReader io.Reader
 	if body != nil {
 		bodyReader = bytes.NewBuffer(body)
@@ -67,7 +67,7 @@ func (c *Connection) request(ctx context.Context, method, url string, body []byt
 		return nil, err
 	}
 
-	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("Content-Type", contentType)
 
 	if c.Username != "" && c.Password != "" {
 		req.SetBasicAuth(c.Username, c.Password)
@@ -183,7 +183,7 @@ func (c *RetryableConnection) setBasicAuth(username, password string) {
 	c.Password = password
 }
 
-func (c *RetryableConnection) request(ctx context.Context, method, path string, body []byte) (*Response, error) {
+func (c *RetryableConnection) request(ctx context.Context, method, path, contentType string, body []byte) (*Response, error) {
 	var bodyReader io.Reader
 	if body != nil {
 		bodyReader = bytes.NewBuffer(body)
@@ -193,7 +193,7 @@ func (c *RetryableConnection) request(ctx context.Context, method, path string, 
 		return nil, err
 	}
 
-	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("Content-Type", contentType)
 	if c.Username != "" && c.Password != "" {
 		req.SetBasicAuth(c.Username, c.Password)
 	}

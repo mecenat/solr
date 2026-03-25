@@ -10,6 +10,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 )
 
 // Client is the interface encompasing all the solr service methods
@@ -102,8 +103,19 @@ type Client interface {
 	CustomUpdate(ctx context.Context, item *UpdateBuilder, opts *WriteOptions) (*Response, error)
 }
 
-func read(ctx context.Context, conn connection, url string) (*Response, error) {
-	return conn.request(ctx, http.MethodGet, url, nil)
+// maxURLLength is the threshold above which read switches from GET to POST.
+// 2048 is a common limit enforced by HTTP servers and reverse proxies.
+const maxURLLength = 2048
+
+func read(ctx context.Context, conn connection, rawURL string) (*Response, error) {
+	if len(rawURL) > maxURLLength {
+		if base, query, ok := strings.Cut(rawURL, "?"); ok {
+			// Split URL into base path and query string, send query as POST body
+			// with x-www-form-urlencoded content type. Solr supports this natively.
+			return conn.request(ctx, http.MethodPost, base, "application/x-www-form-urlencoded", []byte(query))
+		}
+	}
+	return conn.request(ctx, http.MethodGet, rawURL, "application/json", nil)
 }
 
 func create(ctx context.Context, conn connection, url string, item interface{}) (*Response, error) {
@@ -117,7 +129,7 @@ func create(ctx context.Context, conn connection, url string, item interface{}) 
 		return nil, fmt.Errorf("invalid JSON provided: %s", err)
 	}
 
-	return conn.request(ctx, http.MethodPost, url, bodyBytes)
+	return conn.request(ctx, http.MethodPost, url, "application/json", bodyBytes)
 }
 
 func batchCreate(ctx context.Context, conn connection, url string, items interface{}) (*Response, error) {
@@ -131,7 +143,7 @@ func batchCreate(ctx context.Context, conn connection, url string, items interfa
 		return nil, fmt.Errorf("invalid Array of JSON provided: %s", err)
 	}
 
-	return conn.request(ctx, http.MethodPost, url, bodyBytes)
+	return conn.request(ctx, http.MethodPost, url, "application/json", bodyBytes)
 }
 
 func update(ctx context.Context, conn connection, url string, item *UpdatedFields) (*Response, error) {
@@ -143,7 +155,7 @@ func update(ctx context.Context, conn connection, url string, item *UpdatedField
 		return nil, err
 	}
 
-	return conn.request(ctx, http.MethodPost, url, bodyBytes)
+	return conn.request(ctx, http.MethodPost, url, "application/json", bodyBytes)
 }
 
 func delete(ctx context.Context, conn connection, url string, doc Doc) (*Response, error) {
@@ -155,7 +167,7 @@ func delete(ctx context.Context, conn connection, url string, doc Doc) (*Respons
 		return nil, err
 	}
 
-	return conn.request(ctx, http.MethodPost, url, bodyBytes)
+	return conn.request(ctx, http.MethodPost, url, "application/json", bodyBytes)
 }
 
 func commit(ctx context.Context, conn connection, url string, opts *CommitOptions) (*Response, error) {
@@ -167,7 +179,7 @@ func commit(ctx context.Context, conn connection, url string, opts *CommitOption
 		return nil, err
 	}
 
-	return conn.request(ctx, http.MethodPost, url, bodyBytes)
+	return conn.request(ctx, http.MethodPost, url, "application/json", bodyBytes)
 }
 
 func optimize(ctx context.Context, conn connection, url string, opts *OptimizeOptions) (*Response, error) {
@@ -179,7 +191,7 @@ func optimize(ctx context.Context, conn connection, url string, opts *OptimizeOp
 		return nil, err
 	}
 
-	return conn.request(ctx, http.MethodPost, url, bodyBytes)
+	return conn.request(ctx, http.MethodPost, url, "application/json", bodyBytes)
 }
 
 func rollback(ctx context.Context, conn connection, url string) (*Response, error) {
@@ -191,7 +203,7 @@ func rollback(ctx context.Context, conn connection, url string) (*Response, erro
 		return nil, err
 	}
 
-	return conn.request(ctx, http.MethodPost, url, bodyBytes)
+	return conn.request(ctx, http.MethodPost, url, "application/json", bodyBytes)
 }
 
 func customUpdate(ctx context.Context, conn connection, url string, item *UpdateBuilder) (*Response, error) {
@@ -202,5 +214,5 @@ func customUpdate(ctx context.Context, conn connection, url string, item *Update
 		return nil, err
 	}
 
-	return conn.request(ctx, http.MethodPost, url, bodyBytes)
+	return conn.request(ctx, http.MethodPost, url, "application/json", bodyBytes)
 }

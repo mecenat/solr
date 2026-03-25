@@ -61,7 +61,7 @@ func TestConnectionDrainsResponseBody(t *testing.T) {
 	url := conn.formatBasePath() + "/select?q=*%3A*&wt=json"
 
 	for i := 0; i < 3; i++ {
-		_, err = conn.request(ctx, http.MethodGet, url, nil)
+		_, err = conn.request(ctx, http.MethodGet, url, "application/json", nil)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -147,7 +147,7 @@ func TestNewDefaultHTTPClientWorksWithNewConnection(t *testing.T) {
 
 	ctx := context.Background()
 	url := conn.formatBasePath() + "/admin/ping"
-	_, err = conn.request(ctx, http.MethodGet, url, nil)
+	_, err = conn.request(ctx, http.MethodGet, url, "application/json", nil)
 	if err != nil {
 		t.Fatalf("request with default client failed: %v", err)
 	}

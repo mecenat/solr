@@ -171,14 +171,14 @@ func (s *SchemaAPI) post(ctx context.Context, body interface{}) (*Response, erro
 	if err != nil {
 		return nil, err
 	}
-	return s.conn.request(ctx, http.MethodPost, s.Path, bodyBytes)
+	return s.conn.request(ctx, http.MethodPost, s.Path, "application/json", bodyBytes)
 }
 
 // RetrieveSchema allows you to read how your schema has been defined. The output will
 // include all fields, field types, dynamic rules and copy field rules in json.
 // The schema name and version are also included.
 func (s *SchemaAPI) RetrieveSchema(ctx context.Context) (*Response, error) {
-	return s.conn.request(ctx, http.MethodGet, s.Path, nil)
+	return s.conn.request(ctx, http.MethodGet, s.Path, "application/json", nil)
 }
 
 // AddFieldType adds a new field type to the schema. For more info:

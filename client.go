@@ -37,7 +37,7 @@ func (c *SingleClient) formatURL(path string, query string) string {
 // Ping ...
 func (c *SingleClient) Ping(ctx context.Context) error {
 	url := c.formatURL("/admin/ping", "")
-	res, err := c.conn.request(ctx, http.MethodGet, url, nil)
+	res, err := c.conn.request(ctx, http.MethodGet, url, "application/json", nil)
 	if err != nil {
 		return err
 	}

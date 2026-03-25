@@ -56,7 +56,7 @@ func (c *PRClient) formatReplicaURL(path string, query string) string {
 // Ping tests the connectivity of both servers
 func (c *PRClient) Ping(ctx context.Context) error {
 	url := c.formatPrimaryURL("/admin/ping", "")
-	res, err := c.primary.request(ctx, http.MethodGet, url, nil)
+	res, err := c.primary.request(ctx, http.MethodGet, url, "application/json", nil)
 	if err != nil {
 		return err
 	}
@@ -64,7 +64,7 @@ func (c *PRClient) Ping(ctx context.Context) error {
 		return fmt.Errorf("error pinging primary server, status: %s", *res.Status)
 	}
 	url = c.formatReplicaURL("/admin/ping", "")
-	res, err = c.replica.request(ctx, http.MethodGet, url, nil)
+	res, err = c.replica.request(ctx, http.MethodGet, url, "application/json", nil)
 	if err != nil {
 		return err
 	}
