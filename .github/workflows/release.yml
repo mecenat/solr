@@ -27,7 +27,7 @@ jobs:
 
       - uses: actions/setup-go@v6
         with:
-          go-version-file: go.mod
+          go-version-file: testintegration/go.mod
 
       - run: cd testintegration && go test -tags=integration -v -timeout=300s .
 

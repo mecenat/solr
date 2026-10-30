@@ -1,12 +1,12 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 
 	"github.com/mecenat/solr"
 	"github.com/mecenat/solr/examples/data"
-	"golang.org/x/net/context"
 )
 
 // The following example acts as a showcase of most of the methods provided

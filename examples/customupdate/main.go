@@ -1,12 +1,12 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 
 	"github.com/mecenat/solr"
 	"github.com/mecenat/solr/examples/data"
-	"golang.org/x/net/context"
 )
 
 // Usually updates to the solr index will happen one by one. In rare occasions thought there might
